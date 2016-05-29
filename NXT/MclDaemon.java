@@ -24,22 +24,21 @@ import lejos.robotics.navigation.MoveListener;
 import lejos.robotics.navigation.MoveProvider;
 
 public class MclDaemon implements Runnable, ButtonListener, MoveListener {
-
-	private static enum Message {GET_RANGES,GET_MOVE, RANGES, MOVE, MOVE_END};
-	private static final float[] RANGE_ANGLES = {-90f,-45f,0f,45f,90f};
 	
+	private static enum Message {GET_RANGES,GET_MOVE, RANGES, MOVE, MOVE_END};
 	private static final RegulatedMotor HEAD_MOTOR = Motor.C;
 	private static final RegulatedMotor LEFT_MOTOR = Motor.A;
 	private static final RegulatedMotor RIGHT_MOTOR = Motor.B;
 	private static final SensorPort ULTRASONIC_PORT = SensorPort.S4;
-	private final SensorPort COLOR_PORT = SensorPort.S3;
-	private final SensorPort LIGHT_PORT = SensorPort.S2;
+	private static final SensorPort COLOR_PORT = SensorPort.S3;
+	private static final SensorPort LIGHT_PORT = SensorPort.S2;
 	
+	private static final float[] RANGE_ANGLES = {-90f,-45f,0f,45f,90f};
 	private static final int HEAD_GEAR_RATIO = 1;
 	private static final double WHEEL_DIAMETER= 3.4d;
 	private static final double TRACK_WIDTH= 16.1d;
-	private static final double ROTATE_SPEED = 100f;
-	private static final double TRAVEL_SPEED = 50f;
+	private static final double ROTATE_SPEED = 100d;
+	private static final double TRAVEL_SPEED = 50d;
 	private static final float MIN_DISTANCE = 10f;
 	private static final float MAX_DISTANCE = 20f;
 	
@@ -54,6 +53,8 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private DataInputStream in;
 	private DataOutputStream out;//the output has to be synchronized, as it is used by the MoveListener too.
 	
+	private int moveStartCounter = 0;
+	private int moveStopCounter = 0;
 	
 	public static void main(String[] args) {
 		(new MclDaemon()).run();
@@ -137,10 +138,21 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
         	}
         }
         pilot.stop();
+        while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before this message! TODO: Any better ideas/implementation of a semaphore for synchronization?
+        synchronized(out) {
+			try {
+				out.writeByte(Message.MOVE_END.ordinal());
+				out.flush();
+			} catch (IOException e) {
+				exception();
+			}
+		}
 	}
 	
 	@Override
-	public void moveStarted(Move event, MoveProvider mp) {}
+	public void moveStarted(Move event, MoveProvider mp) {
+		moveStartCounter++;
+	}
 
 	@Override
 	public void moveStopped(Move event, MoveProvider mp) {
@@ -153,6 +165,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 				exception();
 			}
 		}
+		moveStopCounter++;
 	}
 
 	@Override
@@ -160,7 +173,9 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 
 	@Override
 	public void buttonReleased(Button b) {
+		System.out.println("Exit");
 		running = false;
+		pilot.stop();
 		System.exit(0);
 	}
 

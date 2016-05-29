@@ -10,8 +10,8 @@ import robotics.generic.IMclMove;
 
 public class Move2D implements IMclMove<Move2D> {
 	
-	private static final float rotationNoise = 2.0f;//percent(Max)
-	private static final float moveNoise = 2.0f;//percent(Max)
+	private static final float rotationNoise = 2.0f;//maximum percentage
+	private static final float moveNoise = 2.0f;//maximum percentage
 	private static Random rand = new Random();
 	
 	private LinkedList<Move> moveList = new LinkedList<Move>();

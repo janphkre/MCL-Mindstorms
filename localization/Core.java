@@ -14,7 +14,7 @@ public class Core implements Runnable  {
 	private static final double WEIGHT_MAX = 0.998d;
 	private static final double[] RANGE_ANGLES = {-90d,-45d,0d,45d,90d};
 	
-	private int pause;//ms
+	private int pause; //milliseconds
 	
 	private GuiMain gui;
 	private Map2D<Position2D> map;
@@ -63,7 +63,7 @@ public class Core implements Runnable  {
 			//2. WeightParticles through the Ranges:
 			rangeReading();
 			pause();
-			//3. Reselection:
+			//3. Reselection  of Particles:
 			result = reselect();
 		}
 		gui.displayResult(result);
