@@ -111,13 +111,6 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
     	
 	}
 	
-	private void exception() {
-		System.out.println("IO Exception");
-		running = false;
-		pilot.stop();
-		System.exit(0);
-	}
-	
 	public void performMove() {
 		float targetdist = (float) (MIN_DISTANCE + rand.nextGaussian() * (MAX_DISTANCE - MIN_DISTANCE));
 		float delta = 0f;
@@ -178,5 +171,12 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		pilot.stop();
 		System.exit(0);
 	}
-
+	
+	private void exception() {
+		System.out.println("IO Exception");
+		running = false;
+		pilot.stop();
+		System.exit(0);
+	}
+	
 }

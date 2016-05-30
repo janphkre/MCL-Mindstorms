@@ -8,7 +8,7 @@ import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
 import robotics.generic.IMclMove;
 
-public class Move2D implements IMclMove<Move2D> {
+public class MoveNXT implements IMclMove {
 	
 	private static final float rotationNoise = 2.0f;//maximum percentage
 	private static final float moveNoise = 2.0f;//maximum percentage
@@ -21,8 +21,8 @@ public class Move2D implements IMclMove<Move2D> {
 	}
 	
 	@Override
-	public Move2D generateNoise() {
-		Move2D result = new Move2D();
+	public MoveNXT generateNoise() {
+		MoveNXT result = new MoveNXT();
 		for(Move move:moveList) {
 			Move moveNew;
 			if(move.getMoveType() == MoveType.TRAVEL) {

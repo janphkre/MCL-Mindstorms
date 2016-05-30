@@ -12,9 +12,9 @@ import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.*;
 import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
-import localization.Move2D;
+import localization.MoveNXT;
 
-public class Connector implements IMclRobot<Move2D>, Runnable {
+public class Connector implements IMclRobot, Runnable {
 	
 	private static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
 	private static final double RANGE_SENSOR_NOISE = 2.0d;//cm
@@ -24,16 +24,16 @@ public class Connector implements IMclRobot<Move2D>, Runnable {
 	private boolean connected = false;
 	private NXTConnector connection;
 	private DataInputStream in; //only used in the second thread. No synchronization!
-	private DataOutputStream out; //synchronized, just to be sure between Gui and MCL/Core!
+	private DataOutputStream out; //synchronized, just to be sure between GUI and MCL/Core!
 	private Thread connectionThread;
 	private SynchronousQueue<double[]> rangeQueue;
-	private SynchronousQueue<Move2D> moveQueue;
+	private SynchronousQueue<MoveNXT> moveQueue;
 	private Random rand;
 	
 	public Connector(final double[] rangeAngles) {
 		this.rangeAngles = rangeAngles;
 		this.rangeQueue = new SynchronousQueue<double[]>();
-		this.moveQueue = new SynchronousQueue<Move2D>();
+		this.moveQueue = new SynchronousQueue<MoveNXT>();
 		this.rand = new Random();
 	}
 	
@@ -135,12 +135,12 @@ public class Connector implements IMclRobot<Move2D>, Runnable {
 		if(rangeReading < 0) return 0;
 		final double realRangeReading = rangeReading + RANGE_SENSOR_NOISE * rand.nextDouble() - RANGE_SENSOR_NOISE / 2;
 		final double delta = realRangeReading > rangeMap ? realRangeReading - rangeMap : rangeMap - realRangeReading;
-		return delta < MAX_RELIABLE_RANGE_READING ? delta / MAX_RELIABLE_RANGE_READING: 0/*TODO: Zero? What if the sensor failed to fetch a correct result?*/;
+		return delta < MAX_RELIABLE_RANGE_READING ? delta / MAX_RELIABLE_RANGE_READING: 0;//TODO: Zero? What if the sensor failed to fetch a correct result?
 	}
 
 	
 	@Override
-	public Move2D performMove() {
+	public MoveNXT performMove() {
 		if(!connected) return null;
 		synchronized(out) {
 			try {
@@ -162,7 +162,7 @@ public class Connector implements IMclRobot<Move2D>, Runnable {
 	
 	@Override
 	public void run() {
-		Move2D currentMove = new Move2D();
+		MoveNXT currentMove = new MoveNXT();
 		while(connected) {
 			try {
 				Message message = Message.values()[in.read()];
@@ -184,7 +184,7 @@ public class Connector implements IMclRobot<Move2D>, Runnable {
 					break;
 				case MOVE_END://As we want to update the particles only once after the complete move has come to an end, we need some other message too.
 					moveQueue.put(currentMove);
-					currentMove = new Move2D();
+					currentMove = new MoveNXT();
 					break;
 				default:
 				}

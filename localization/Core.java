@@ -17,20 +17,20 @@ public class Core implements Runnable  {
 	private int pause; //milliseconds
 	
 	private GuiMain gui;
-	private Map2D<Position2D> map;
+	private Map2D map;
 	private Connector connector;
-	private MonteCarloLocalization<Move2D,Position2D> mcl;
+	private MonteCarloLocalization mcl;
 	
 	public Core(GuiMain gui) {
 		this.pause = 1000;
 		this.gui = gui;
-		this.map = new Map2D<Position2D>();
+		this.map = new Map2D();
 		this.connector = new Connector(RANGE_ANGLES);
-		this.mcl = new MonteCarloLocalization<Move2D,Position2D>(PARTICLE_COUNT, WEIGHT_MIN, WEIGHT_MAX, map, connector, RANGE_ANGLES);
+		this.mcl = new MonteCarloLocalization(PARTICLE_COUNT, WEIGHT_MIN, WEIGHT_MAX, map, connector, RANGE_ANGLES);
 	}
 	
 	public void move() {
-		Move2D move = connector.performMove();
+		MoveNXT move = connector.performMove();
 		gui.displayMove(move);
 		mcl.applyMove(move);
 		gui.displayParticles(mcl.getParticleIterator());
@@ -43,10 +43,10 @@ public class Core implements Runnable  {
 		gui.displayParticles(mcl.getParticleIterator());
 	}
 	
-	public LinkedList<Position2D> reselect() {
+	public LinkedList<PositionNXT> reselect() {
 		mcl.reselectParticles();
 		gui.displayParticles(mcl.getParticleIterator());
-		LinkedList<Position2D> result = mcl.getPosition();
+		LinkedList<PositionNXT> result = (LinkedList<PositionNXT>) mcl.getPosition();
 		if(!result.isEmpty()) return result;
 		return null;
 	}
@@ -55,19 +55,24 @@ public class Core implements Runnable  {
 	public void run() {
 		gui.displayParticles(mcl.getParticleIterator());
 		pause();
-		LinkedList<Position2D> result = null;
+		LinkedList<PositionNXT> result = null;
 		rangeReading();
+		gui.notify();
 		while(result == null) {
 			//1. Move the Robot:
 			move();
+			gui.notify();
 			//2. WeightParticles through the Ranges:
 			rangeReading();
+			gui.notify();
 			pause();
 			//3. Reselection  of Particles:
 			result = reselect();
+			gui.notify();
 		}
 		gui.displayResult(result);
 		gui.algorithmFinished();
+		gui.notify();
 	}
 	
 	private void pause() {

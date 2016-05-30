@@ -4,8 +4,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import localization.Core;
-import localization.Move2D;
-import localization.Position2D;
+import localization.MoveNXT;
+import localization.PositionNXT;
 import robotics.Particle;
 
 public class GuiMain {
@@ -26,15 +26,15 @@ public class GuiMain {
 		// TODO
 	}
 	
-	public void displayMove(Move2D move) {
+	public void displayMove(MoveNXT move) {
 		// TODO
 	}
 	
-	public void displayParticles(Iterator<Particle<Position2D>> iterator) {
+	public void displayParticles(Iterator<Particle> iterator) {
 		// TODO
 	}
 
-	public void displayResult(LinkedList<Position2D> result) {
+	public void displayResult(LinkedList<PositionNXT> result) {
 		// TODO
 		
 	}
