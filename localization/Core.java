@@ -17,20 +17,20 @@ public class Core implements Runnable  {
 	private int pause; //milliseconds
 	
 	private GuiMain gui;
-	private Map2D map;
+	private Map2D<NXTPosition> map;
 	private Connector connector;
-	private MonteCarloLocalization mcl;
+	private MonteCarloLocalization<NXTPosition> mcl;
 	
 	public Core(GuiMain gui) {
 		this.pause = 1000;
 		this.gui = gui;
-		this.map = new Map2D();
+		this.map = new Map2D<NXTPosition>(new NXTPositionFactory());
 		this.connector = new Connector(RANGE_ANGLES);
-		this.mcl = new MonteCarloLocalization(PARTICLE_COUNT, WEIGHT_MIN, WEIGHT_MAX, map, connector, RANGE_ANGLES);
+		this.mcl = new MonteCarloLocalization<NXTPosition>(PARTICLE_COUNT, WEIGHT_MIN, WEIGHT_MAX, map, connector, RANGE_ANGLES);
 	}
 	
 	public void move() {
-		MoveNXT move = connector.performMove();
+		NXTMove move = connector.performMove();
 		gui.displayMove(move);
 		mcl.applyMove(move);
 		gui.displayParticles(mcl.getParticleIterator());
@@ -43,10 +43,10 @@ public class Core implements Runnable  {
 		gui.displayParticles(mcl.getParticleIterator());
 	}
 	
-	public LinkedList<PositionNXT> reselect() {
+	public LinkedList<NXTPosition> reselect() {
 		mcl.reselectParticles();
 		gui.displayParticles(mcl.getParticleIterator());
-		LinkedList<PositionNXT> result = (LinkedList<PositionNXT>) mcl.getPosition();
+		LinkedList<NXTPosition> result = mcl.getPosition();
 		if(!result.isEmpty()) return result;
 		return null;
 	}
@@ -55,7 +55,7 @@ public class Core implements Runnable  {
 	public void run() {
 		gui.displayParticles(mcl.getParticleIterator());
 		pause();
-		LinkedList<PositionNXT> result = null;
+		LinkedList<NXTPosition> result = null;
 		rangeReading();
 		gui.notify();
 		while(result == null) {

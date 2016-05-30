@@ -12,7 +12,7 @@ import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.*;
 import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
-import localization.MoveNXT;
+import localization.NXTMove;
 
 public class Connector implements IMclRobot, Runnable {
 	
@@ -27,13 +27,13 @@ public class Connector implements IMclRobot, Runnable {
 	private DataOutputStream out; //synchronized, just to be sure between GUI and MCL/Core!
 	private Thread connectionThread;
 	private SynchronousQueue<double[]> rangeQueue;
-	private SynchronousQueue<MoveNXT> moveQueue;
+	private SynchronousQueue<NXTMove> moveQueue;
 	private Random rand;
 	
 	public Connector(final double[] rangeAngles) {
 		this.rangeAngles = rangeAngles;
 		this.rangeQueue = new SynchronousQueue<double[]>();
-		this.moveQueue = new SynchronousQueue<MoveNXT>();
+		this.moveQueue = new SynchronousQueue<NXTMove>();
 		this.rand = new Random();
 	}
 	
@@ -140,7 +140,7 @@ public class Connector implements IMclRobot, Runnable {
 
 	
 	@Override
-	public MoveNXT performMove() {
+	public NXTMove performMove() {
 		if(!connected) return null;
 		synchronized(out) {
 			try {
@@ -162,7 +162,7 @@ public class Connector implements IMclRobot, Runnable {
 	
 	@Override
 	public void run() {
-		MoveNXT currentMove = new MoveNXT();
+		NXTMove currentMove = new NXTMove();
 		while(connected) {
 			try {
 				Message message = Message.values()[in.read()];
@@ -184,7 +184,7 @@ public class Connector implements IMclRobot, Runnable {
 					break;
 				case MOVE_END://As we want to update the particles only once after the complete move has come to an end, we need some other message too.
 					moveQueue.put(currentMove);
-					currentMove = new MoveNXT();
+					currentMove = new NXTMove();
 					break;
 				default:
 				}
