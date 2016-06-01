@@ -5,10 +5,11 @@ import java.util.Iterator;
 import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
 import lejos.robotics.navigation.Pose;
-import robotics.concrete.Position2D;
-import robotics.generic.IMclMove;
 
-public class NXTPosition implements Position2D<NXTPosition> {
+import robotics.concrete.datatypes.Angle;
+import robotics.concrete.datatypes.Position2D;
+
+public class NXTPosition implements Position2D<NXTPosition,NXTMove> {
 	
 	private Pose pose;
 
@@ -17,12 +18,6 @@ public class NXTPosition implements Position2D<NXTPosition> {
 	}
 	
 	@Override
-	public NXTPosition applyMovement(IMclMove move) {
-		if(move == null) throw new RuntimeException("Received null as movement!");
-		if(move instanceof NXTMove) return applyMovement((NXTMove) move);
-		throw new RuntimeException("Movement is not of type MoveNXT!");
-	}
-	
 	public NXTPosition applyMovement(NXTMove moves) {
 		NXTPosition result = clone();
 		Iterator<Move> iterator = moves.getMoves();
@@ -36,8 +31,8 @@ public class NXTPosition implements Position2D<NXTPosition> {
 	}
 
 	@Override
-	public NXTPosition addAngle(double angle) {
-		return new NXTPosition(pose.getX(), pose.getY(), pose.getHeading() + (float) angle);
+	public NXTPosition addAngle(Angle angle) {
+		return new NXTPosition(pose.getX(), pose.getY(), pose.getHeading() + (float) angle.getValue());
 	}
 	
 	@Override
@@ -58,6 +53,13 @@ public class NXTPosition implements Position2D<NXTPosition> {
 	@Override
 	public double getHeading() {
 		return pose.getHeading();
+	}
+
+	@Override
+	public double distanceTo(NXTPosition position) {
+		final double vectorX = pose.getX() - position.getX();
+		final double vectorY = pose.getY() - position.getY();
+		return Math.sqrt(vectorX*vectorX + vectorY*vectorY);
 	}
 
 }

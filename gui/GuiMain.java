@@ -1,12 +1,13 @@
 package gui;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 
 import localization.Core;
 import localization.NXTMove;
 import localization.NXTPosition;
 import robotics.Particle;
+import robotics.concrete.datatypes.Angle;
+import robotics.concrete.datatypes.RangeReading;
 
 public class GuiMain {
 	
@@ -22,7 +23,7 @@ public class GuiMain {
 		}
 	}
 	
-	public void displayRangeReadings(double[] rangeReadings) {
+	public void displayRangeReadings(RangeReading[] rangeReadings) {
 		// TODO
 	}
 	
@@ -30,11 +31,11 @@ public class GuiMain {
 		// TODO
 	}
 	
-	public void displayParticles(Iterator<Particle<NXTPosition>> iterator) {
+	public void displayParticles(Iterator<Particle<NXTPosition,Angle,NXTMove>> iterator) {
 		// TODO
 	}
 
-	public void displayResult(LinkedList<NXTPosition> result) {
+	public void displayResult(NXTPosition result) {
 		// TODO
 		
 	}

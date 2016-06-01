@@ -1,5 +1,7 @@
 package bot;
 
+import robotics.concrete.datatypes.Angle;
+import robotics.concrete.datatypes.RangeReading;
 import robotics.generic.IMclRobot;
 
 import java.io.DataInputStream;
@@ -14,25 +16,30 @@ import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
 import localization.NXTMove;
 
-public class Connector implements IMclRobot, Runnable {
+public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
 	
 	private static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
+	private static final double MAX_RANGE_READING = 255.0d;//cm
 	private static final double RANGE_SENSOR_NOISE = 2.0d;//cm
 	private static enum Message {GET_RANGES,GET_MOVE, RANGES, MOVE, MOVE_END};
-	private final double[] rangeAngles;
+	private static final Angle[] RANGE_ANGLES = {
+			new Angle(-90d),
+			new Angle(-45d),
+			new Angle(  0d),
+			new Angle( 45d),
+			new Angle( 90d)};
 	
 	private boolean connected = false;
 	private NXTConnector connection;
 	private DataInputStream in; //only used in the second thread. No synchronization!
 	private DataOutputStream out; //synchronized, just to be sure between GUI and MCL/Core!
 	private Thread connectionThread;
-	private SynchronousQueue<double[]> rangeQueue;
+	private SynchronousQueue<RangeReading[]> rangeQueue;
 	private SynchronousQueue<NXTMove> moveQueue;
 	private Random rand;
 	
-	public Connector(final double[] rangeAngles) {
-		this.rangeAngles = rangeAngles;
-		this.rangeQueue = new SynchronousQueue<double[]>();
+	public Connector() {
+		this.rangeQueue = new SynchronousQueue<RangeReading[]>();
 		this.moveQueue = new SynchronousQueue<NXTMove>();
 		this.rand = new Random();
 	}
@@ -109,7 +116,7 @@ public class Connector implements IMclRobot, Runnable {
 	}
 	
 	@Override
-	public double[] getRangeReadings() {
+	public RangeReading[] getRangeReadings() {
 		if(!connected) return null;
 		synchronized(out) {
 			try {
@@ -130,12 +137,12 @@ public class Connector implements IMclRobot, Runnable {
 	}
 
 	@Override
-	public double calculateRangeNoise(double rangeReading, double rangeMap) {
-		if((rangeReading < 0 || rangeReading > MAX_RELIABLE_RANGE_READING) && rangeMap > MAX_RELIABLE_RANGE_READING) return 1;
-		if(rangeReading < 0) return 0;
-		final double realRangeReading = rangeReading + RANGE_SENSOR_NOISE * rand.nextDouble() - RANGE_SENSOR_NOISE / 2;
-		final double delta = realRangeReading > rangeMap ? realRangeReading - rangeMap : rangeMap - realRangeReading;
-		return delta < MAX_RELIABLE_RANGE_READING ? delta / MAX_RELIABLE_RANGE_READING: 0;//TODO: Zero? What if the sensor failed to fetch a correct result?
+	public float calculateRangeNoise(RangeReading rangeReading, RangeReading rangeMap) {
+		if((rangeReading.getValue() < 0 || rangeReading.getValue() > MAX_RELIABLE_RANGE_READING) && rangeMap.getValue() > MAX_RELIABLE_RANGE_READING) return 1;
+		if(rangeReading.getValue() < 0) return 0;
+		final double realRangeReading = rangeReading.getValue() + RANGE_SENSOR_NOISE * rand.nextDouble() - RANGE_SENSOR_NOISE / 2;
+		final double delta = realRangeReading > rangeMap.getValue() ? realRangeReading - rangeMap.getValue() : rangeMap.getValue() - realRangeReading;
+		return (float) (delta < MAX_RELIABLE_RANGE_READING ? delta / MAX_RELIABLE_RANGE_READING: 0);//TODO: Zero? What if the sensor failed to fetch a correct result?
 	}
 
 	
@@ -168,11 +175,11 @@ public class Connector implements IMclRobot, Runnable {
 				Message message = Message.values()[in.read()];
 				switch(message) {
 				case RANGES:
-					RangeReadings rangeReadings = new RangeReadings(rangeAngles.length);
+					RangeReadings rangeReadings = new RangeReadings(RANGE_ANGLES.length);
 					rangeReadings.loadObject(in);
-					double[] ranges = new double[rangeAngles.length];
-					for(int i=0;i < rangeAngles.length;i++) {
-						ranges[i] = rangeReadings.getRange(i);
+					RangeReading[] ranges = new RangeReading[RANGE_ANGLES.length];
+					for(int i=0;i < RANGE_ANGLES.length;i++) {
+						ranges[i] = new RangeReading(rangeReadings.getRange(i));
 					}
 					rangeQueue.put(ranges);
 					break;
@@ -194,5 +201,14 @@ public class Connector implements IMclRobot, Runnable {
 				break;
 			}
 		}
+	}
+
+	@Override
+	public Angle[] getRangeVectors() {
+		return RANGE_ANGLES;
+	}
+	
+	public double getMaxSensorRange() {
+		return MAX_RANGE_READING;
 	}
 }

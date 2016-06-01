@@ -6,9 +6,9 @@ import java.util.Random;
 
 import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
-import robotics.generic.IMclMove;
+import robotics.generic.datatypes.IMclMove;
 
-public class NXTMove implements IMclMove {
+public class NXTMove implements IMclMove<NXTMove> {
 	
 	private static final float rotationNoise = 2.0f;//maximum percentage
 	private static final float moveNoise = 2.0f;//maximum percentage

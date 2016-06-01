@@ -1,32 +1,31 @@
 package localization;
 
-import java.util.LinkedList;
-
 import bot.Connector;
 import gui.GuiMain;
 import robotics.MonteCarloLocalization;
 import robotics.concrete.Map2D;
+import robotics.concrete.datatypes.Angle;
+import robotics.concrete.datatypes.RangeReading;
 
 public class Core implements Runnable  {
 	
 	private static final int PARTICLE_COUNT = 200;
 	private static final double WEIGHT_MIN = 0.001d;
 	private static final double WEIGHT_MAX = 0.998d;
-	private static final double[] RANGE_ANGLES = {-90d,-45d,0d,45d,90d};
 	
 	private int pause; //milliseconds
 	
 	private GuiMain gui;
-	private Map2D<NXTPosition> map;
+	private Map2D<NXTPosition,NXTMove> map;
 	private Connector connector;
-	private MonteCarloLocalization<NXTPosition> mcl;
+	private MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl;
 	
 	public Core(GuiMain gui) {
 		this.pause = 1000;
 		this.gui = gui;
-		this.map = new Map2D<NXTPosition>(new NXTPositionFactory());
-		this.connector = new Connector(RANGE_ANGLES);
-		this.mcl = new MonteCarloLocalization<NXTPosition>(PARTICLE_COUNT, WEIGHT_MIN, WEIGHT_MAX, map, connector, RANGE_ANGLES);
+		this.connector = new Connector();
+		this.map = new Map2D<NXTPosition,NXTMove>(new NXTPositionFactory(),connector.getMaxSensorRange());
+		this.mcl = new MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading>(PARTICLE_COUNT, WEIGHT_MIN, WEIGHT_MAX, map, connector);
 	}
 	
 	public void move() {
@@ -37,25 +36,23 @@ public class Core implements Runnable  {
 	}
 	
 	public void rangeReading() {
-		double[] rangeReadings = connector.getRangeReadings();
+		RangeReading[] rangeReadings = connector.getRangeReadings();
 		gui.displayRangeReadings(rangeReadings);
 		mcl.weightParticles(rangeReadings);
 		gui.displayParticles(mcl.getParticleIterator());
 	}
 	
-	public LinkedList<NXTPosition> reselect() {
+	public NXTPosition reselect() {
 		mcl.reselectParticles();
 		gui.displayParticles(mcl.getParticleIterator());
-		LinkedList<NXTPosition> result = mcl.getPosition();
-		if(!result.isEmpty()) return result;
-		return null;
+		return mcl.getPosition();
 	}
 	
 	@Override
 	public void run() {
 		gui.displayParticles(mcl.getParticleIterator());
 		pause();
-		LinkedList<NXTPosition> result = null;
+		NXTPosition result = null;
 		rangeReading();
 		gui.notify();
 		while(result == null) {

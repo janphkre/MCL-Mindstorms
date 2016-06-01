@@ -2,7 +2,7 @@ package localization;
 
 import robotics.concrete.IPositionFactory;
 
-public class NXTPositionFactory implements IPositionFactory<NXTPosition> {
+public class NXTPositionFactory implements IPositionFactory<NXTPosition,NXTMove> {
 
 	@Override
 	public NXTPosition getPosition(double x, double y, double heading) {
