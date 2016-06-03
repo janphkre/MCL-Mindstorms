@@ -1,20 +1,22 @@
 package bot;
 
-import robotics.concrete.datatypes.Angle;
-import robotics.concrete.datatypes.RangeReading;
-import robotics.generic.IMclRobot;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.SynchronousQueue;
 
+import gui.ErrorLog;
 import lejos.nxt.remote.NXTCommand;
-import lejos.pc.comm.*;
+import lejos.pc.comm.NXTComm;
+import lejos.pc.comm.NXTCommFactory;
+import lejos.pc.comm.NXTConnector;
 import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
 import localization.NXTMove;
+import robotics.concrete.datatypes.Angle;
+import robotics.concrete.datatypes.RangeReading;
+import robotics.generic.IMclRobot;
 
 public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
 	
@@ -59,10 +61,8 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	}
 	
 	private void ioException() {
-		try {
-			connection.close();
-		} catch (Exception e) { }
-		//TODO: MESSAGEBOX / connectionPanel!
+		close();
+		ErrorLog.log("IOException! Did the Bot turn off?");
 	}
 	
 	public void connect(String name, String program) {
@@ -70,7 +70,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		
 		connection = new NXTConnector();
 		if(!connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.LCP)) {
-			System.out.println("Failed to connect to the NXT.");
+			ErrorLog.log("Failed to connect to the NXT.");
 			connected = false;
 			return;
 		}
@@ -78,7 +78,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		try {
 			command.startProgram(program);
 		} catch (IOException e) {
-			System.out.println("Failed to start the program.");
+			ErrorLog.log("Failed to start the program.");
 			try {
 				command.disconnect();
 				connection.close();
@@ -140,9 +140,9 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	public float calculateRangeNoise(RangeReading rangeReading, RangeReading rangeMap) {
 		if((rangeReading.getValue() < 0 || rangeReading.getValue() > MAX_RELIABLE_RANGE_READING) && rangeMap.getValue() > MAX_RELIABLE_RANGE_READING) return 1;
 		if(rangeReading.getValue() < 0) return 0;
-		final double realRangeReading = rangeReading.getValue() + RANGE_SENSOR_NOISE * rand.nextDouble() - RANGE_SENSOR_NOISE / 2;
-		final double delta = realRangeReading > rangeMap.getValue() ? realRangeReading - rangeMap.getValue() : rangeMap.getValue() - realRangeReading;
-		return (float) (delta < MAX_RELIABLE_RANGE_READING ? delta / MAX_RELIABLE_RANGE_READING: 0);//TODO: Zero? What if the sensor failed to fetch a correct result?
+		final double adaptedRangeReading = rangeReading.getValue() + RANGE_SENSOR_NOISE * rand.nextDouble() - RANGE_SENSOR_NOISE / 2;
+		final double delta = Math.abs(adaptedRangeReading - rangeMap.getValue());
+		return (float) (delta < MAX_RELIABLE_RANGE_READING ? 1/delta: 1/delta);//TODO: any better ideas instead of 1/delta?
 	}
 
 	

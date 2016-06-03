@@ -10,8 +10,8 @@ import robotics.concrete.datatypes.RangeReading;
 public class Core implements Runnable  {
 	
 	private static final int PARTICLE_COUNT = 200;
-	private static final double WEIGHT_MIN = 0.001d;
-	private static final double WEIGHT_MAX = 0.998d;
+	private static final double MIN_WEIGHT = 0.001d;
+	private static final double MAX_DISTANCE = 10d;
 	
 	private int pause; //milliseconds
 	
@@ -25,7 +25,7 @@ public class Core implements Runnable  {
 		this.gui = gui;
 		this.connector = new Connector();
 		this.map = new Map2D<NXTPosition,NXTMove>(new NXTPositionFactory(),connector.getMaxSensorRange());
-		this.mcl = new MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading>(PARTICLE_COUNT, WEIGHT_MIN, WEIGHT_MAX, map, connector);
+		this.mcl = new MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading>(PARTICLE_COUNT, MIN_WEIGHT, MAX_DISTANCE, map, connector);
 	}
 	
 	public void move() {
@@ -79,7 +79,4 @@ public class Core implements Runnable  {
 			e.printStackTrace();
 		}
 	}
-	
-	
-	
 }
