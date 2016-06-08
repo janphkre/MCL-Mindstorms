@@ -130,7 +130,6 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		try {
 			return rangeQueue.take();
 		} catch (InterruptedException e) {
-			// TODO ignore???
 			e.printStackTrace();
 		}
 		return null;
@@ -142,7 +141,8 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		if(rangeReading.getValue() < 0) return 0;
 		final double adaptedRangeReading = rangeReading.getValue() + RANGE_SENSOR_NOISE * rand.nextDouble() - RANGE_SENSOR_NOISE / 2;
 		final double delta = Math.abs(adaptedRangeReading - rangeMap.getValue());
-		return (float) (delta < MAX_RELIABLE_RANGE_READING ? 1/delta: 1/delta);//TODO: any better ideas instead of 1/delta?
+		if(Double.isInfinite(delta)) return 0;
+		return (float) (delta < MAX_RELIABLE_RANGE_READING ? (MAX_RELIABLE_RANGE_READING-delta)/MAX_RELIABLE_RANGE_READING: 1/delta);
 	}
 
 	
@@ -161,7 +161,6 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		try {
 			return moveQueue.take();
 		} catch (InterruptedException e) {
-			// TODO ignore???
 			e.printStackTrace();
 		}
 		return null;
@@ -179,7 +178,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 					rangeReadings.loadObject(in);
 					RangeReading[] ranges = new RangeReading[RANGE_ANGLES.length];
 					for(int i=0;i < RANGE_ANGLES.length;i++) {
-						ranges[i] = new RangeReading(rangeReadings.getRange(i));
+						ranges[i] = new RangeReading(rangeReadings.getRange(i),RANGE_ANGLES[i]);
 					}
 					rangeQueue.put(ranges);
 					break;
@@ -198,14 +197,9 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 			} catch (IOException e) {
 				ioException();
 			} catch (InterruptedException e) {
-				break;
+				e.printStackTrace();
 			}
 		}
-	}
-
-	@Override
-	public Angle[] getRangeVectors() {
-		return RANGE_ANGLES;
 	}
 	
 	public double getMaxSensorRange() {

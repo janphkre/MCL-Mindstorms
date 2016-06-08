@@ -3,7 +3,8 @@ package localization;
 import bot.Connector;
 import gui.GuiMain;
 import robotics.MonteCarloLocalization;
-import robotics.concrete.Map2D;
+import robotics.concrete.CartesianPlot2D;
+import robotics.concrete.SVGGroupParser;
 import robotics.concrete.datatypes.Angle;
 import robotics.concrete.datatypes.RangeReading;
 
@@ -16,7 +17,7 @@ public class Core implements Runnable  {
 	private int pause; //milliseconds
 	
 	private GuiMain gui;
-	private Map2D<NXTPosition,NXTMove> map;
+	private CartesianPlot2D<NXTPosition,NXTMove> map;
 	private Connector connector;
 	private MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl;
 	
@@ -24,7 +25,7 @@ public class Core implements Runnable  {
 		this.pause = 1000;
 		this.gui = gui;
 		this.connector = new Connector();
-		this.map = new Map2D<NXTPosition,NXTMove>(new NXTPositionFactory(),connector.getMaxSensorRange());
+		this.map = new CartesianPlot2D<NXTPosition,NXTMove>(new SVGGroupParser(), new NXTPositionFactory(),connector.getMaxSensorRange());
 		this.mcl = new MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading>(PARTICLE_COUNT, MIN_WEIGHT, MAX_DISTANCE, map, connector);
 	}
 	
@@ -42,10 +43,10 @@ public class Core implements Runnable  {
 		gui.displayParticles(mcl.getParticleIterator());
 	}
 	
-	public NXTPosition reselect() {
-		mcl.reselectParticles();
+	public NXTPosition resample() {
+		mcl.resampleParticles();
 		gui.displayParticles(mcl.getParticleIterator());
-		return mcl.getPosition();
+		return mcl.getPose();
 	}
 	
 	@Override
@@ -64,7 +65,7 @@ public class Core implements Runnable  {
 			gui.notify();
 			pause();
 			//3. Reselection  of Particles:
-			result = reselect();
+			result = resample();
 			gui.notify();
 		}
 		gui.displayResult(result);

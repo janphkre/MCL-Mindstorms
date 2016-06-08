@@ -7,9 +7,9 @@ import lejos.robotics.navigation.Move.MoveType;
 import lejos.robotics.navigation.Pose;
 
 import robotics.concrete.datatypes.Angle;
-import robotics.concrete.datatypes.Position2D;
+import robotics.concrete.datatypes.Pose2D;
 
-public class NXTPosition implements Position2D<NXTPosition,NXTMove> {
+public class NXTPosition implements Pose2D<NXTPosition,NXTMove> {
 	
 	private Pose pose;
 
