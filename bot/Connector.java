@@ -3,9 +3,12 @@ package bot;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Random;
 import java.util.concurrent.SynchronousQueue;
 
+import aima.core.robotics.IMclRobot;
+import aima.core.robotics.impl.datatypes.Angle;
+import aima.core.robotics.impl.datatypes.RangeReading;
+import aima.core.util.Util;
 import gui.ErrorLog;
 import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.NXTComm;
@@ -14,9 +17,6 @@ import lejos.pc.comm.NXTConnector;
 import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
 import localization.NXTMove;
-import robotics.concrete.datatypes.Angle;
-import robotics.concrete.datatypes.RangeReading;
-import robotics.generic.IMclRobot;
 
 public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
 	
@@ -38,12 +38,10 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	private Thread connectionThread;
 	private SynchronousQueue<RangeReading[]> rangeQueue;
 	private SynchronousQueue<NXTMove> moveQueue;
-	private Random rand;
 	
 	public Connector() {
 		this.rangeQueue = new SynchronousQueue<RangeReading[]>();
 		this.moveQueue = new SynchronousQueue<NXTMove>();
-		this.rand = new Random();
 	}
 	
 	public boolean isConnected() {
@@ -139,7 +137,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	public float calculateRangeNoise(RangeReading rangeReading, RangeReading rangeMap) {
 		if((rangeReading.getValue() < 0 || rangeReading.getValue() > MAX_RELIABLE_RANGE_READING) && rangeMap.getValue() > MAX_RELIABLE_RANGE_READING) return 1;
 		if(rangeReading.getValue() < 0) return 0;
-		final double adaptedRangeReading = rangeReading.getValue() + RANGE_SENSOR_NOISE * rand.nextDouble() - RANGE_SENSOR_NOISE / 2;
+		final double adaptedRangeReading = Util.generateRandomDoubleBetween(rangeReading.getValue() - RANGE_SENSOR_NOISE, rangeReading.getValue() + RANGE_SENSOR_NOISE);
 		final double delta = Math.abs(adaptedRangeReading - rangeMap.getValue());
 		if(Double.isInfinite(delta)) return 0;
 		return (float) (delta < MAX_RELIABLE_RANGE_READING ? (MAX_RELIABLE_RANGE_READING-delta)/MAX_RELIABLE_RANGE_READING: 1/delta);

@@ -1,12 +1,12 @@
 package localization;
 
+import aima.core.robotics.impl.MonteCarloLocalization;
+import aima.core.robotics.impl.datatypes.Angle;
+import aima.core.robotics.impl.datatypes.RangeReading;
+import aima.core.robotics.impl.map.CartesianPlot2D;
+import aima.core.robotics.impl.map.SVGGroupParser;
 import bot.Connector;
 import gui.GuiMain;
-import robotics.MonteCarloLocalization;
-import robotics.concrete.CartesianPlot2D;
-import robotics.concrete.SVGGroupParser;
-import robotics.concrete.datatypes.Angle;
-import robotics.concrete.datatypes.RangeReading;
 
 public class Core implements Runnable  {
 	

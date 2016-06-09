@@ -4,9 +4,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
 
+import aima.core.robotics.datatypes.IMclMove;
 import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
-import robotics.generic.datatypes.IMclMove;
 
 public class NXTMove implements IMclMove<NXTMove> {
 	

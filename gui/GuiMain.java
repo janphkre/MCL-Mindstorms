@@ -2,12 +2,12 @@ package gui;
 
 import java.util.Iterator;
 
+import aima.core.robotics.impl.Particle;
+import aima.core.robotics.impl.datatypes.Angle;
+import aima.core.robotics.impl.datatypes.RangeReading;
 import localization.Core;
 import localization.NXTMove;
 import localization.NXTPosition;
-import robotics.Particle;
-import robotics.concrete.datatypes.Angle;
-import robotics.concrete.datatypes.RangeReading;
 
 public class GuiMain {
 	
