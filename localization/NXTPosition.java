@@ -51,7 +51,7 @@ public class NXTPosition implements Pose2D<NXTPosition,NXTMove> {
 
 	@Override
 	public double getHeading() {
-		return pose.getHeading();
+		return Math.toRadians(pose.getHeading());
 	}
 
 	@Override
