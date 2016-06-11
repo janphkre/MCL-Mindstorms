@@ -26,7 +26,7 @@ public class Core implements Runnable  {
 		this.gui = gui;
 		this.connector = new Connector();
 		this.map = new CartesianPlot2D<NXTPosition,NXTMove>(new SVGGroupParser(), new NXTPositionFactory(),connector.getMaxSensorRange());
-		this.mcl = new MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading>(PARTICLE_COUNT, MIN_WEIGHT, MAX_DISTANCE, map, connector);
+		this.mcl = new MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading>(map, connector, PARTICLE_COUNT, MIN_WEIGHT, MAX_DISTANCE);
 	}
 	
 	public void move() {

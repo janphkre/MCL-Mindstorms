@@ -13,7 +13,15 @@ public class NXTPosition implements Pose2D<NXTPosition,NXTMove> {
 	private Pose pose;
 
 	public NXTPosition(float x, float y, float heading) {
-		pose = new Pose(x, y, heading);
+		pose = new Pose(x, y, (float) Math.toDegrees(heading));
+	}
+	
+	public NXTPosition(float x,float y, float heading, boolean isDegrees) {
+		if(isDegrees) {
+			pose = new Pose(x, y, heading);
+		} else {
+			pose = new Pose(x, y, (float) Math.toDegrees(heading));
+		}
 	}
 	
 	@Override
@@ -31,12 +39,12 @@ public class NXTPosition implements Pose2D<NXTPosition,NXTMove> {
 
 	@Override
 	public NXTPosition addAngle(Angle angle) {
-		return new NXTPosition(pose.getX(), pose.getY(), pose.getHeading() + (float) angle.getValue());
+		return new NXTPosition(pose.getX(), pose.getY(), pose.getHeading() + (float) Math.toDegrees(angle.getValue()),true);
 	}
 	
 	@Override
 	public NXTPosition clone() {
-		return new NXTPosition(pose.getX(), pose.getY(), pose.getHeading());
+		return new NXTPosition(pose.getX(), pose.getY(), pose.getHeading(),true);
 	}
 
 	@Override
