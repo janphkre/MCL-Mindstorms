@@ -17,7 +17,7 @@ public class Core implements Runnable  {
 	private int pause; //milliseconds
 	
 	private GuiMain gui;
-	private CartesianPlot2D<NXTPosition,NXTMove> map;
+	private CartesianPlot2D<NXTPosition,NXTMove,NXTRangeReading> map;
 	private Connector connector;
 	private MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl;
 	
@@ -25,7 +25,7 @@ public class Core implements Runnable  {
 		this.pause = 1000;
 		this.gui = gui;
 		this.connector = new Connector();
-		this.map = new CartesianPlot2D<NXTPosition,NXTMove>(new SVGGroupParser(), new NXTPositionFactory(),connector.getMaxSensorRange());
+		this.map = new CartesianPlot2D<NXTPosition,NXTMove,NXTRangeReading>(new SVGGroupParser(), new NXTPositionFactory(), new NXTRangeReadingFactory(),connector.getMaxSensorRange());
 		this.mcl = new MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading>(map, connector, PARTICLE_COUNT, MIN_WEIGHT, MAX_DISTANCE);
 	}
 	

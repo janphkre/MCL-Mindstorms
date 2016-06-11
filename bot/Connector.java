@@ -17,12 +17,12 @@ import lejos.pc.comm.NXTConnector;
 import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
 import localization.NXTMove;
+import localization.NXTRangeReading;
 
 public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
 	
 	private static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
 	private static final double MAX_RANGE_READING = 255.0d;//cm
-	private static final double RANGE_SENSOR_NOISE = 2.0d;//cm
 	private static enum Message {GET_RANGES,GET_MOVE, RANGES, MOVE, MOVE_END};
 	private static final Angle[] RANGE_ANGLES = {
 			new Angle(-90d),
@@ -134,11 +134,10 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	}
 
 	@Override
-	public float calculateRangeNoise(RangeReading rangeReading, RangeReading rangeMap) {
-		if((rangeReading.getValue() < 0 || rangeReading.getValue() > MAX_RELIABLE_RANGE_READING) && rangeMap.getValue() > MAX_RELIABLE_RANGE_READING) return 1;
-		if(rangeReading.getValue() < 0) return 0;
-		final double adaptedRangeReading = Util.generateRandomDoubleBetween(rangeReading.getValue() - RANGE_SENSOR_NOISE, rangeReading.getValue() + RANGE_SENSOR_NOISE);
-		final double delta = Math.abs(adaptedRangeReading - rangeMap.getValue());
+	public float calculateWeight(RangeReading firstRange, RangeReading secondRange) {
+		if((firstRange.getValue() < 0 || firstRange.getValue() > MAX_RELIABLE_RANGE_READING) && secondRange.getValue() > MAX_RELIABLE_RANGE_READING) return 1;
+		if(firstRange.getValue() < 0) return 0;
+		final double delta = Math.abs(firstRange.getValue() - secondRange.getValue());
 		if(Double.isInfinite(delta)) return 0;
 		return (float) (delta < MAX_RELIABLE_RANGE_READING ? (MAX_RELIABLE_RANGE_READING-delta)/MAX_RELIABLE_RANGE_READING: 1/delta);
 	}
@@ -176,7 +175,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 					rangeReadings.loadObject(in);
 					RangeReading[] ranges = new RangeReading[RANGE_ANGLES.length];
 					for(int i=0;i < RANGE_ANGLES.length;i++) {
-						ranges[i] = new RangeReading(rangeReadings.getRange(i),RANGE_ANGLES[i]);
+						ranges[i] = new NXTRangeReading(rangeReadings.getRange(i),RANGE_ANGLES[i]);
 					}
 					rangeQueue.put(ranges);
 					break;
