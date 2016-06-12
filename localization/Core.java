@@ -10,8 +10,14 @@ import gui.GuiMain;
 
 public class Core implements Runnable  {
 	
+	private static final Angle[] RANGE_READING_ANGLES = {
+			new Angle(-Math.PI/2),
+			new Angle(-Math.PI/4),
+			new Angle(  0d),
+			new Angle(Math.PI/4),
+			new Angle(Math.PI/2)};
 	private static final int PARTICLE_COUNT = 200;
-	private static final double MIN_WEIGHT = 0.001d;
+	private static final double MIN_WEIGHT = Math.pow(0.1,RANGE_READING_ANGLES.length);
 	private static final double MAX_DISTANCE = 10d;
 	
 	private int pause; //milliseconds
@@ -24,7 +30,7 @@ public class Core implements Runnable  {
 	public Core(GuiMain gui) {
 		this.pause = 1000;
 		this.gui = gui;
-		this.connector = new Connector();
+		this.connector = new Connector(RANGE_READING_ANGLES);
 		this.map = new CartesianPlot2D<NXTPosition,NXTMove,NXTRangeReading>(new SVGGroupParser(), new NXTPositionFactory(), new NXTRangeReadingFactory(),connector.getMaxSensorRange());
 		this.mcl = new MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading>(map, connector, PARTICLE_COUNT, MIN_WEIGHT, MAX_DISTANCE);
 	}
@@ -76,6 +82,18 @@ public class Core implements Runnable  {
 	private void pause() {
 		try {
 			Thread.sleep(pause);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void main() {
+		GuiMain gui = new GuiMain();
+		Core core = new Core(gui);
+		Thread thread = new Thread(core);
+		thread.start();
+		try {
+			gui.wait();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

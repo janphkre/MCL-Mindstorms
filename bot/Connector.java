@@ -24,12 +24,8 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	private static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
 	private static final double MAX_RANGE_READING = 255.0d;//cm
 	private static enum Message {GET_RANGES,GET_MOVE, RANGES, MOVE, MOVE_END};
-	private static final Angle[] RANGE_ANGLES = {
-			new Angle(-90d),
-			new Angle(-45d),
-			new Angle(  0d),
-			new Angle( 45d),
-			new Angle( 90d)};
+	
+	private final Angle[] rangeReadingAngles;
 	
 	private boolean connected = false;
 	private NXTConnector connection;
@@ -39,7 +35,8 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	private SynchronousQueue<RangeReading[]> rangeQueue;
 	private SynchronousQueue<NXTMove> moveQueue;
 	
-	public Connector() {
+	public Connector(Angle[] rangeReadingAngles) {
+		this.rangeReadingAngles = rangeReadingAngles;
 		this.rangeQueue = new SynchronousQueue<RangeReading[]>();
 		this.moveQueue = new SynchronousQueue<NXTMove>();
 	}
@@ -171,11 +168,11 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 				Message message = Message.values()[in.read()];
 				switch(message) {
 				case RANGES:
-					RangeReadings rangeReadings = new RangeReadings(RANGE_ANGLES.length);
+					RangeReadings rangeReadings = new RangeReadings(rangeReadingAngles.length);
 					rangeReadings.loadObject(in);
-					RangeReading[] ranges = new RangeReading[RANGE_ANGLES.length];
-					for(int i=0;i < RANGE_ANGLES.length;i++) {
-						ranges[i] = new NXTRangeReading(rangeReadings.getRange(i),RANGE_ANGLES[i]);
+					RangeReading[] ranges = new RangeReading[rangeReadingAngles.length];
+					for(int i=0;i < rangeReadingAngles.length;i++) {
+						ranges[i] = new NXTRangeReading(rangeReadings.getRange(i),rangeReadingAngles[i]);
 					}
 					rangeQueue.put(ranges);
 					break;

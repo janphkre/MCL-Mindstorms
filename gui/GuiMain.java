@@ -5,23 +5,10 @@ import java.util.Iterator;
 import aima.core.robotics.impl.Particle;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.RangeReading;
-import localization.Core;
 import localization.NXTMove;
 import localization.NXTPosition;
 
-public class GuiMain {
-	
-	public static void main() {
-		GuiMain gui = new GuiMain();
-		Core core = new Core(gui);
-		Thread thread = new Thread(core);
-		thread.start();
-		try {
-			gui.wait();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
+public class GuiMain implements Runnable {
 	
 	public void displayRangeReadings(RangeReading[] rangeReadings) {
 		// TODO
@@ -41,6 +28,21 @@ public class GuiMain {
 	}
 	
 	public void algorithmFinished() {
-		// TODO: : enable grayed-out button(s) again
+		// TODO: enable grayed-out button(s) again
+	}
+
+	@Override
+	public void run() {
+		Thread.currentThread().setDaemon(true);
+		while(true) {
+			try {
+				this.wait();
+			} catch (InterruptedException e) {}
+			update();
+		}
+	}
+	
+	private void update() {
+		//TODO
 	}
 }
