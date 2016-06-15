@@ -3,7 +3,7 @@ package localization;
 import aima.core.robotics.impl.map.IPoseFactory;
 import aima.core.util.Util;
 import aima.core.util.datastructure.Pair;
-import aima.core.util.math2d.Point2D;
+import aima.core.util.math.geom.Point2D;
 
 public class NXTPositionFactory implements IPoseFactory<NXTPosition,NXTMove> {
 

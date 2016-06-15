@@ -41,6 +41,10 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		this.moveQueue = new SynchronousQueue<NXTMove>();
 	}
 	
+	public double getMaxSensorRange() {
+		return MAX_RANGE_READING;
+	}
+	
 	public boolean isConnected() {
 		return connected;
 	}
@@ -108,6 +112,12 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
     	connectionThread = new Thread(this);
     	connectionThread.setDaemon(true);
     	connectionThread.start();
+	}
+	
+	@Override
+	public void initializeRobot() {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	@Override
@@ -194,9 +204,5 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 				e.printStackTrace();
 			}
 		}
-	}
-	
-	public double getMaxSensorRange() {
-		return MAX_RANGE_READING;
 	}
 }
