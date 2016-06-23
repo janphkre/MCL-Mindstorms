@@ -3,7 +3,7 @@ package localization;
 import aima.core.robotics.impl.map.IPoseFactory;
 import aima.core.util.Util;
 import aima.core.util.datastructure.Pair;
-import aima.core.util.math.geom.Point2D;
+import aima.core.util.math.geom.shapes.Point2D;
 
 public class NXTPositionFactory implements IPoseFactory<NXTPosition,NXTMove> {
 
@@ -23,6 +23,11 @@ public class NXTPositionFactory implements IPoseFactory<NXTPosition,NXTMove> {
 	}
 
 	@Override
+	public NXTPosition getPose(Point2D point, double heading) {
+		return new NXTPosition((float) point.getX(), (float) point.getY(), (float) heading);
+	}
+	
+	@Override
 	public boolean isHeadingValid(NXTPosition pose) {
 		final double heading = pose.getHeading();
 		for(AnglePair headingRange: validHeadings) {
@@ -30,5 +35,4 @@ public class NXTPositionFactory implements IPoseFactory<NXTPosition,NXTMove> {
 		}
 		return false;
 	}
-
 }

@@ -8,7 +8,6 @@ import java.util.concurrent.SynchronousQueue;
 import aima.core.robotics.IMclRobot;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.RangeReading;
-import aima.core.util.Util;
 import gui.ErrorLog;
 import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.NXTComm;
@@ -21,8 +20,9 @@ import localization.NXTRangeReading;
 
 public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
 	
-	private static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
-	private static final double MAX_RANGE_READING = 255.0d;//cm
+	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
+	public static final double MAX_RANGE_READING = 255.0d;//cm
+	
 	private static enum Message {GET_RANGES,GET_MOVE, RANGES, MOVE, MOVE_END};
 	
 	private final Angle[] rangeReadingAngles;
@@ -39,10 +39,6 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		this.rangeReadingAngles = rangeReadingAngles;
 		this.rangeQueue = new SynchronousQueue<RangeReading[]>();
 		this.moveQueue = new SynchronousQueue<NXTMove>();
-	}
-	
-	public double getMaxSensorRange() {
-		return MAX_RANGE_READING;
 	}
 	
 	public boolean isConnected() {
@@ -112,12 +108,6 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
     	connectionThread = new Thread(this);
     	connectionThread.setDaemon(true);
     	connectionThread.start();
-	}
-	
-	@Override
-	public void initializeRobot() {
-		// TODO Auto-generated method stub
-		
 	}
 	
 	@Override
