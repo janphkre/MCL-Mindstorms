@@ -1,5 +1,6 @@
 package localization;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -17,6 +18,10 @@ public class NXTMove implements IMclMove<NXTMove> {
 	
 	public void add(Move move) {
 		moveList.add(move);
+	}
+	
+	public Iterator<Move> getMoves() {
+		return moveList.iterator();
 	}
 	
 	@Override
@@ -47,8 +52,6 @@ public class NXTMove implements IMclMove<NXTMove> {
 		return result;
 	}
 	
-	public Iterator<Move> getMoves() {
-		return moveList.iterator();
 	@Override
 	public String toString() {
 		String result = new String();
