@@ -1,12 +1,16 @@
 package gui;
 
+import java.io.File;
+
 import aima.core.robotics.impl.MonteCarloLocalization;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.RangeReading;
 import aima.core.robotics.impl.map.MclCartesianPlot2D;
 import aima.core.util.math.geom.SVGGroupParser;
+import aima.gui.applications.robotics.AnglePanel;
 import aima.gui.applications.robotics.MonteCarloLocalizationApp;
 import aima.gui.applications.robotics.Settings;
+import aima.gui.applications.robotics.SimpleSettingsListener;
 import bot.Connector;
 import localization.NXTMove;
 import localization.NXTPosition;
@@ -16,21 +20,23 @@ import localization.NXTRangeReadingFactory;
 
 public class GuiMain {
 	
-	private static final Angle[] RANGE_READING_ANGLES = {
-			new Angle(-Math.PI/2),
-			new Angle(-Math.PI/4),
-			new Angle(0d),
-			new Angle(Math.PI/4),
-			new Angle(Math.PI/2)};
-	private static final int PARTICLE_COUNT = 200;
-	private static final double MIN_WEIGHT = Math.pow(0.1,RANGE_READING_ANGLES.length);
-	private static final double MAX_DISTANCE = 2;//cm
+	private static final File DEFAULT_SETTINGS_FILE = new File("");//TODO
 	
 	public static void main(String[] args) {
-		Settings settings = new Settings();
-		Connector robot = new Connector(RANGE_READING_ANGLES);
-		MclCartesianPlot2D<NXTPosition, NXTMove, RangeReading> map = new MclCartesianPlot2D<NXTPosition,NXTMove,RangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory(),Connector.MAX_RELIABLE_RANGE_READING);
-		MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, RangeReading>(map, robot, PARTICLE_COUNT, MIN_WEIGHT, MAX_DISTANCE);
-		new MonteCarloLocalizationApp<NXTPosition,NXTMove,NXTRangeReading>(mcl, map, robot, new NXTRobotGui(robot), settings);
+		Settings settingsGui = MonteCarloLocalizationApp.buildSettings(args.length > 0 ? new File(args[0]) : DEFAULT_SETTINGS_FILE);
+		NXTSettingsListener settingsListener = new NXTSettingsListener(settingsGui);
+		settingsListener.createSettings();
+		
+		final double sensorRange = Double.parseDouble(settingsGui.getSetting(Settings.SENSOR_RANGE_KEY));
+		final int particleCount = Integer.parseInt(settingsGui.getSetting(Settings.PARTICLE_COUNT_KEY));
+		final double minWeight = Double.parseDouble(settingsGui.getSetting(Settings.MIN_WEIGHT_KEY));
+		final double maxDistance = Double.parseDouble(settingsGui.getSetting(Settings.MAX_DISTANCE_KEY));
+		AnglePanel angles = new AnglePanel();
+		settingsGui.registerSpecialSetting(Settings.RANGE_READING_ANGLES_KEY, angles);
+		
+		Connector robot = new Connector(angles.getSetting());
+		MclCartesianPlot2D<NXTPosition, NXTMove, RangeReading> map = new MclCartesianPlot2D<NXTPosition,NXTMove,RangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory(),sensorRange);
+		MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, RangeReading>(map, robot, particleCount, minWeight, maxDistance);
+		new MonteCarloLocalizationApp<NXTPosition,NXTMove,NXTRangeReading>(mcl, map, robot, new NXTRobotGui(robot), settingsGui);
 	}
 }
