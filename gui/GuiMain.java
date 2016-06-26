@@ -6,7 +6,7 @@ import aima.core.robotics.impl.datatypes.RangeReading;
 import aima.core.robotics.impl.map.MclCartesianPlot2D;
 import aima.core.util.math.geom.SVGGroupParser;
 import aima.gui.applications.robotics.MonteCarloLocalizationApp;
-import aima.gui.applications.robotics.IRobotGui;
+import aima.gui.applications.robotics.Settings;
 import bot.Connector;
 import localization.NXTMove;
 import localization.NXTPosition;
@@ -27,9 +27,10 @@ public class GuiMain {
 	private static final double MAX_DISTANCE = 2;//cm
 	
 	public static void main(String[] args) {
+		Settings settings = new Settings();
 		Connector robot = new Connector(RANGE_READING_ANGLES);
 		MclCartesianPlot2D<NXTPosition, NXTMove, RangeReading> map = new MclCartesianPlot2D<NXTPosition,NXTMove,RangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory(),Connector.MAX_RELIABLE_RANGE_READING);
 		MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, RangeReading>(map, robot, PARTICLE_COUNT, MIN_WEIGHT, MAX_DISTANCE);
-		new MonteCarloLocalizationApp<NXTPosition,NXTMove,NXTRangeReading>(mcl, map, robot, new NXTRobotGui(robot));
+		new MonteCarloLocalizationApp<NXTPosition,NXTMove,NXTRangeReading>(mcl, map, robot, new NXTRobotGui(robot), settings);
 	}
 }

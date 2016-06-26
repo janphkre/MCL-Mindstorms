@@ -56,7 +56,7 @@ public class NXTMove implements IMclMove<NXTMove> {
 	public String toString() {
 		String result = new String();
 		for(Move move: moveList) {
-			result += move.toString() +"\n";
+			result += move.toString() + "\n";
 		}
 		return result;
 	}

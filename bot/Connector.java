@@ -8,7 +8,7 @@ import java.util.concurrent.SynchronousQueue;
 import aima.core.robotics.IMclRobot;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.RangeReading;
-import gui.ErrorLog;
+import gui.NXTRobotGui;
 import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.NXTComm;
 import lejos.pc.comm.NXTCommFactory;
@@ -27,6 +27,8 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	
 	private final Angle[] rangeReadingAngles;
 	
+	private NXTRobotGui gui;
+	
 	private boolean connected = false;
 	private NXTConnector connection;
 	private DataInputStream in; //only used in the second thread. No synchronization!
@@ -39,6 +41,10 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		this.rangeReadingAngles = rangeReadingAngles;
 		this.rangeQueue = new SynchronousQueue<RangeReading[]>();
 		this.moveQueue = new SynchronousQueue<NXTMove>();
+	}
+	
+	public void registerGui(NXTRobotGui gui) {
+		this.gui = gui;
 	}
 	
 	public boolean isConnected() {
@@ -57,7 +63,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	
 	private void ioException() {
 		close();
-		ErrorLog.log("IOException! Did the Bot turn off?");
+		gui.showError("IOException! Did the Bot turn off?");
 	}
 	
 	public void connect(String name, String program) {
@@ -65,7 +71,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		
 		connection = new NXTConnector();
 		if(!connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.LCP)) {
-			ErrorLog.log("Failed to connect to the NXT.");
+			gui.showError("Failed to connect to the NXT.");
 			connected = false;
 			return;
 		}
@@ -73,7 +79,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		try {
 			command.startProgram(program);
 		} catch (IOException e) {
-			ErrorLog.log("Failed to start the program.");
+			gui.showError("Failed to start the program.");
 			try {
 				command.disconnect();
 				connection.close();
