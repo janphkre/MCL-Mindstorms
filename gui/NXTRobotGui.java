@@ -2,7 +2,7 @@ package gui;
 
 import javax.swing.JOptionPane;
 
-import aima.gui.applications.robotics.IRobotGui;
+import aima.gui.applications.robotics.components.IRobotGui;
 import bot.Connector;
 
 public class NXTRobotGui implements IRobotGui {

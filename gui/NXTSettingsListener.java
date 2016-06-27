@@ -1,7 +1,7 @@
 package gui;
 
-import aima.gui.applications.robotics.DefaultSettingsListener;
-import aima.gui.applications.robotics.Settings;
+import aima.gui.applications.robotics.components.Settings;
+import aima.gui.applications.robotics.util.DefaultSettingsListener;
 
 public class NXTSettingsListener extends DefaultSettingsListener {
 
