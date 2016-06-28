@@ -10,9 +10,6 @@ public class NXTSettingsListener extends DefaultSettingsListener {
 
 	public NXTSettingsListener(Settings settingsGui) {
 		super(settingsGui);
-		settingsGui.registerListener(Settings.MOVE_ROTATION_NOISE_KEY, this);
-		settingsGui.registerListener(Settings.MOVE_DISTANCE_NOISE_KEY, this);
-		settingsGui.registerListener(Settings.RANGE_READING_NOISE_KEY, this);
 	}
 
 	@Override
@@ -22,6 +19,10 @@ public class NXTSettingsListener extends DefaultSettingsListener {
 		settingsGui.registerSetting(Settings.MOVE_ROTATION_NOISE_KEY, "Move rotation noise", "PI / 90");
 		settingsGui.registerSetting(Settings.MOVE_DISTANCE_NOISE_KEY, "Move distance noise", "50.0");
 		settingsGui.registerSetting(Settings.RANGE_READING_NOISE_KEY, "Range reading noise", "5.0");
+		
+		settingsGui.registerListener(Settings.MOVE_ROTATION_NOISE_KEY, this);
+		settingsGui.registerListener(Settings.MOVE_DISTANCE_NOISE_KEY, this);
+		settingsGui.registerListener(Settings.RANGE_READING_NOISE_KEY, this);
 	}
 	
 	@Override

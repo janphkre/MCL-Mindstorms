@@ -15,15 +15,15 @@ public class NXTRobotGui implements IRobotGui {
 	}
 	
 	@Override
-	public void initializeRobot() {
+	public boolean initializeRobot() {
 		// TODO Auto-generated method stub
+		return false;
 
 	}
 
 	@Override
 	public void destructRobot() {
-		// TODO Auto-generated method stub
-
+		connector.close();
 	}
 	
 	/**
