@@ -6,7 +6,11 @@ import aima.core.util.Util;
 
 public final class NXTRangeReading extends RangeReading {
 
-	private static final double RANGE_SENSOR_NOISE = 2.0d;//cm
+	private static double RANGE_NOISE = 2.0d;//cm
+	
+	public static void setRangeNoise(double value) {
+		RANGE_NOISE = value;
+	}
 	
 	public NXTRangeReading(double value) {
 		super(value);
@@ -18,7 +22,7 @@ public final class NXTRangeReading extends RangeReading {
 	
 	@Override
 	public RangeReading addRangeNoise() {
-		final double adaptedRangeReading = Util.generateRandomDoubleBetween(getValue() - RANGE_SENSOR_NOISE, getValue() + RANGE_SENSOR_NOISE);
+		final double adaptedRangeReading = Util.generateRandomDoubleBetween(getValue() - RANGE_NOISE, getValue() + RANGE_NOISE);
 		return new NXTRangeReading(adaptedRangeReading,getAngle());
 	}
 

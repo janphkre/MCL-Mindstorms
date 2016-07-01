@@ -10,9 +10,17 @@ import lejos.robotics.navigation.Move.MoveType;
 
 public class NXTMove implements IMclMove<NXTMove> {
 	
-	private static final float rotationNoise = 2.0f;//maximum percentage
-	private static final float moveNoise = 2.0f;//maximum percentage
+	private static float ROTATION_NOISE = 2.0f;//maximum percentage
+	private static float MOVEMENT_NOISE = 2.0f;//maximum percentage
 	private static Random rand = new Random();
+	
+	public static void setRotationNoise(double value) {
+		ROTATION_NOISE = (float) value;
+	}
+	
+	public static void setMovementNoise(double value) {
+		MOVEMENT_NOISE = (float) value;
+	}
 	
 	private LinkedList<Move> moveList = new LinkedList<Move>();
 	
@@ -30,16 +38,16 @@ public class NXTMove implements IMclMove<NXTMove> {
 		for(Move move:moveList) {
 			Move moveNew;
 			if(move.getMoveType() == MoveType.TRAVEL) {
-				final float maxDistanceNoise = moveNoise * (move.getDistanceTraveled());
+				final float maxDistanceNoise = MOVEMENT_NOISE * (move.getDistanceTraveled());
 				final float distance = move.getDistanceTraveled() + maxDistanceNoise * rand.nextFloat() - maxDistanceNoise / 2;
 				moveNew = new Move(MoveType.TRAVEL,distance,0.0f,move.isMoving());
 			} else if(move.getMoveType() == MoveType.ROTATE) {
-				final float maxRotationNoise = rotationNoise * (move.getAngleTurned());
+				final float maxRotationNoise = ROTATION_NOISE * (move.getAngleTurned());
 				final float angle = move.getAngleTurned() + maxRotationNoise * rand.nextFloat() - maxRotationNoise / 2;
 				moveNew = new Move(MoveType.TRAVEL,0.0f,angle,move.isMoving());
 			} else if(move.getMoveType() == MoveType.ARC) {
-				final float maxDistanceNoise = moveNoise * (move.getDistanceTraveled());
-				final float maxRotationNoise = rotationNoise * (move.getAngleTurned());
+				final float maxDistanceNoise = MOVEMENT_NOISE * (move.getDistanceTraveled());
+				final float maxRotationNoise = ROTATION_NOISE * (move.getAngleTurned());
 				final float distance = move.getDistanceTraveled() + maxDistanceNoise * rand.nextFloat() - maxDistanceNoise / 2;
 				final float angle = move.getAngleTurned() + maxRotationNoise * rand.nextFloat() - maxRotationNoise / 2;
 				moveNew = new Move(MoveType.TRAVEL,distance,angle,move.isMoving());

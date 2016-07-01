@@ -25,7 +25,7 @@ import lejos.robotics.navigation.MoveProvider;
 
 public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	
-	private static enum Message {GET_RANGES,GET_MOVE, RANGES, MOVE, MOVE_END};
+	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_MOVE, RANGES, MOVE, MOVE_END};
 	private static final RegulatedMotor HEAD_MOTOR = Motor.C;
 	private static final RegulatedMotor LEFT_MOTOR = Motor.A;
 	private static final RegulatedMotor RIGHT_MOTOR = Motor.B;
@@ -33,14 +33,11 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private static final SensorPort COLOR_PORT = SensorPort.S3;
 	private static final SensorPort LIGHT_PORT = SensorPort.S2;
 	
-	private static final float[] RANGE_ANGLES = {-90f,-45f,0f,45f,90f};
 	private static final int HEAD_GEAR_RATIO = 1;
 	private static final double WHEEL_DIAMETER= 3.4d;
 	private static final double TRACK_WIDTH= 16.1d;
 	private static final double ROTATE_SPEED = 100d;
 	private static final double TRAVEL_SPEED = 50d;
-	private static final float MIN_DISTANCE = 10f;
-	private static final float MAX_DISTANCE = 20f;
 	
 	
 	private Random rand = new Random();
@@ -56,6 +53,10 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private int moveStartCounter = 0;
 	private int moveStopCounter = 0;
 	
+	private float minDistance;
+	private float maxDistance;
+	//private float[] rangeAngles = {-90f,-45f,0f,45f,90f};
+	
 	public static void main(String[] args) {
 		(new MclDaemon()).run();
 	}
@@ -66,14 +67,10 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		pilot.setTravelSpeed(TRAVEL_SPEED);
 		RangeFinder sonic = new UltrasonicSensor(ULTRASONIC_PORT);
 		scanner = new RotatingRangeScanner(HEAD_MOTOR, sonic, HEAD_GEAR_RATIO);
-		scanner.setAngles(RANGE_ANGLES);
+		//scanner.setAngles(rangeAngles);
 		color = new ColorHTSensor(COLOR_PORT);
 		light = new LightSensor(LIGHT_PORT);
-	}
-	
-	@Override
-	public void run() {
-		running = true;
+		
 		NXTCommConnector connector = Bluetooth.getConnector();
 		NXTConnection conn = connector.waitForConnection(0, NXTConnection.PACKET);
 		in = conn.openDataInputStream();
@@ -81,24 +78,42 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		System.out.println("Connected");
 		
 		pilot.addMoveListener(this);
+	}
+	
+	@Override
+	public void run() {
+		running = true;
     	Button.ESCAPE.addButtonListener(this);
-    	
     	while(running) {
 			try {
-				Message message = Message.values()[in.readByte()];
+				final Message message = Message.values()[in.readByte()];
 				switch(message) {
-				case MOVE:
+				case GET_MOVE:
 					System.out.println("MOVE");
 					performMove();
 					break;	
-				case RANGES:
+				case GET_RANGES:
 					System.out.println("RANGES");
-					RangeReadings ranges = scanner.getRangeValues();
+					final RangeReadings ranges = scanner.getRangeValues();
 					synchronized(out) {
 						out.writeByte(Message.RANGES.ordinal());
 						ranges.dumpObject(out);
 						out.flush();
 					}
+					break;
+				case SET_ANGLES:
+					final int count = in.readShort();
+					float[] rangeAngles = new float[count];
+					for(int i=0;i<count;i++) {
+						rangeAngles[i] = in.readFloat();
+					}
+					scanner.setAngles(rangeAngles);
+					break;
+				case SET_MIN_DISTANCE:
+					minDistance = in.readFloat();
+					break;
+				case SET_MAX_DISTANCE:
+					maxDistance = in.readFloat();
 					break;
 				default:
 					System.out.println("MESSAGE:"+message.ordinal()+"?");
@@ -111,8 +126,8 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
     	
 	}
 	
-	public void performMove() {
-		float targetdist = (float) (MIN_DISTANCE + rand.nextGaussian() * (MAX_DISTANCE - MIN_DISTANCE));
+	private void performMove() {
+		float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
 		float delta = 0f;
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
@@ -131,7 +146,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
         	}
         }
         pilot.stop();
-        while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before this message! TODO: Any better ideas/implementation of a semaphore for synchronization?
+        while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before this message! TODO: Any better ideas/implementation of a "semaphore" for synchronization?
         synchronized(out) {
 			try {
 				out.writeByte(Message.MOVE_END.ordinal());

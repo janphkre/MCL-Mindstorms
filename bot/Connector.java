@@ -8,6 +8,7 @@ import java.util.concurrent.SynchronousQueue;
 import aima.core.robotics.IMclRobot;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.RangeReading;
+import aima.core.robotics.impl.simple.SimplePose;
 import gui.NXTRobotGui;
 import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.NXTComm;
@@ -17,15 +18,16 @@ import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
 import localization.NXTMove;
 import localization.NXTRangeReading;
+import aima.gui.applications.robotics.components.AnglePanel;
 
-public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
+public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
 	
 	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
 	public static final double MAX_RANGE_READING = 255.0d;//cm
 	
-	private static enum Message {GET_RANGES,GET_MOVE, RANGES, MOVE, MOVE_END};
+	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_MOVE, RANGES, MOVE, MOVE_END};
 	
-	private final Angle[] rangeReadingAngles;
+	private Angle[] rangeReadingAngles;
 	
 	private NXTRobotGui gui;
 	
@@ -36,6 +38,9 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 	private Thread connectionThread;
 	private SynchronousQueue<RangeReading[]> rangeQueue;
 	private SynchronousQueue<NXTMove> moveQueue;
+	
+	private float minDistance;
+	private float maxDistance;
 	
 	public Connector(Angle[] rangeReadingAngles) {
 		this.rangeReadingAngles = rangeReadingAngles;
@@ -106,7 +111,22 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 		out = new DataOutputStream(connection.getOutputStream());
 		connected = true;
 		
-		
+		try{
+			out.write(Message.SET_ANGLES.ordinal());
+			out.writeInt(rangeReadingAngles.length);
+			for(Angle angle: rangeReadingAngles) {
+				out.writeFloat((float) angle.getValue());
+			}
+			out.flush();
+			out.write(Message.SET_MIN_DISTANCE.ordinal());
+			out.writeFloat(minDistance);
+			out.flush();
+			out.write(Message.SET_MAX_DISTANCE.ordinal());
+			out.writeFloat(maxDistance);
+			out.flush();
+		} catch (IOException e) {
+			ioException();
+		}
 		
 		if(connectionThread != null) {
 			connectionThread.interrupt();
@@ -114,6 +134,49 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
     	connectionThread = new Thread(this);
     	connectionThread.setDaemon(true);
     	connectionThread.start();
+	}
+	
+	public void setMinMoveDistance(double valueNumber) {
+		minDistance = (float) valueNumber;
+		if(connected) {
+			try {
+				out.write(Message.SET_MIN_DISTANCE.ordinal());
+				out.writeFloat((float) valueNumber);
+				out.flush();
+			} catch (IOException e) {
+				ioException();
+			}
+		}
+	}
+	
+	public void setMaxMoveDistance(double valueNumber) {
+		maxDistance = (float) valueNumber;
+		if(connected) {
+			try {
+				out.write(Message.SET_MAX_DISTANCE.ordinal());
+				out.writeFloat((float) valueNumber);
+				out.flush();
+			} catch (IOException e) {
+				ioException();
+			}
+		}
+	}
+	
+	@Override
+	public void notify(Angle[] angles) {
+		rangeReadingAngles = angles;
+		if(connected) {
+			try {
+				out.write(Message.SET_ANGLES.ordinal());
+				out.writeInt(rangeReadingAngles.length);
+				for(Angle angle: angles) {
+					out.writeFloat((float) angle.getValue());
+				}
+				out.flush();
+			} catch (IOException e) {
+				ioException();
+			}
+		}
 	}
 	
 	@Override
@@ -197,7 +260,7 @@ public class Connector implements IMclRobot<Angle,NXTMove,RangeReading>, Runnabl
 			} catch (IOException e) {
 				ioException();
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				break;
 			}
 		}
 	}
