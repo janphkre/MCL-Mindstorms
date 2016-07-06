@@ -1,6 +1,8 @@
 package gui;
 
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
 
 import aima.gui.applications.robotics.components.IRobotGui;
 import bot.Connector;
@@ -8,6 +10,9 @@ import bot.Connector;
 public class NXTRobotGui implements IRobotGui {
 
 	private Connector connector;
+	private JTextField robot_Name;
+	private JTextField program;
+	private String robotDataFrameTitle = "Robot";
 	
 	public NXTRobotGui(Connector connector) {
 		this.connector = connector;
@@ -16,9 +21,36 @@ public class NXTRobotGui implements IRobotGui {
 	
 	@Override
 	public boolean initializeRobot() {
-		// TODO Auto-generated method stub
+		activateSystemStyle();
+		
+		UIManager.put("OptionPane.cancelButtonText", "Abort");
+		UIManager.put("OptionPane.okButtonText", "Connect");
+		  
+		robot_Name = new JTextField();
+		program = new JTextField();
+		Object[] robotData = {"Robot Name:", robot_Name,"Program", program};
+	      
+		JOptionPane pane = new JOptionPane( robotData, 
+	                                                JOptionPane.PLAIN_MESSAGE, 
+	                                                JOptionPane.OK_CANCEL_OPTION);
+	                pane.createDialog(null, robotDataFrameTitle).setVisible(true);
+	   
+	    if(pane.getValue() instanceof Integer){
+	            if(((Integer)pane.getValue()).intValue() == JOptionPane.OK_OPTION){
+	            	connector.connect(robot_Name.getText(), program.getText());
+	            	return connector.isConnected();
+	            }
+	    }
 		return false;
 
+	}
+	private void activateSystemStyle() {
+		try {
+			
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

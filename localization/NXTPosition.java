@@ -3,12 +3,12 @@ package localization;
 import java.util.Iterator;
 
 import aima.core.robotics.impl.datatypes.Angle;
-import aima.core.robotics.impl.datatypes.Pose2D;
+import aima.core.robotics.impl.datatypes.IPose2D;
 import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
 import lejos.robotics.navigation.Pose;
 
-public class NXTPosition implements Pose2D<NXTPosition,NXTMove> {
+public class NXTPosition implements IPose2D<NXTPosition,NXTMove> {
 	
 	private Pose pose;
 

@@ -25,24 +25,17 @@ public class GuiMain extends MonteCarloLocalizationApp<NXTPosition, NXTMove, NXT
 		super(mcl, map, robot, robotGui, settingsGui);
 	}
 
-	protected static final File DEFAULT_SETTINGS_FILE = new File("");//TODO
-	
 	public static void main(String[] args) {
 		Settings settingsGui = MonteCarloLocalizationApp.buildSettings(args.length > 0 ? new File(args[0]) : DEFAULT_SETTINGS_FILE);
 		NXTSettingsListener settingsListener = new NXTSettingsListener(settingsGui);
 		settingsListener.createSettings();
-		settingsGui.registerSetting(PARTICLE_COUNT_KEY, "Particle count", "1000");
 		
-		final double sensorRange = Double.parseDouble(settingsGui.getSetting(NXTSettingsListener.SENSOR_RANGE_KEY));
-		final int particleCount = Integer.parseInt(settingsGui.getSetting(PARTICLE_COUNT_KEY));
-		final double minWeight = Double.parseDouble(settingsGui.getSetting(NXTSettingsListener.MIN_WEIGHT_KEY));
-		final double maxDistance = Double.parseDouble(settingsGui.getSetting(NXTSettingsListener.MAX_DISTANCE_KEY));
 		AnglePanel angles = new AnglePanel();
-		settingsGui.registerSpecialSetting(NXTSettingsListener.RANGE_READING_ANGLES_KEY, angles);
+		settingsGui.registerSpecialSetting(RANGE_READING_ANGLES_KEY, angles);
 		
-		MclCartesianPlot2D<NXTPosition, NXTMove, RangeReading> map = new MclCartesianPlot2D<NXTPosition,NXTMove,RangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory(),sensorRange);
+		MclCartesianPlot2D<NXTPosition, NXTMove, RangeReading> map = new MclCartesianPlot2D<NXTPosition,NXTMove,RangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory());
 		Connector robot = new Connector(angles.getSetting());
-		MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, RangeReading>(map, robot, particleCount, minWeight, maxDistance);
+		MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, RangeReading>(map, robot);
 		GuiMain app = new GuiMain(mcl, map, robot, new NXTRobotGui(robot), settingsGui);
 		
 		angles.setChangeListener(robot);

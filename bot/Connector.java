@@ -41,6 +41,7 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 	
 	private float minDistance;
 	private float maxDistance;
+	private double badDelta;
 	
 	public Connector(Angle[] rangeReadingAngles) {
 		this.rangeReadingAngles = rangeReadingAngles;
@@ -136,12 +137,12 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
     	connectionThread.start();
 	}
 	
-	public void setMinMoveDistance(double valueNumber) {
-		minDistance = (float) valueNumber;
+	public void setMinMoveDistance(double distance) {
+		minDistance = (float) distance;
 		if(connected) {
 			try {
 				out.write(Message.SET_MIN_DISTANCE.ordinal());
-				out.writeFloat((float) valueNumber);
+				out.writeFloat((float) distance);
 				out.flush();
 			} catch (IOException e) {
 				ioException();
@@ -149,17 +150,21 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 		}
 	}
 	
-	public void setMaxMoveDistance(double valueNumber) {
-		maxDistance = (float) valueNumber;
+	public void setMaxMoveDistance(double distance) {
+		maxDistance = (float) distance;
 		if(connected) {
 			try {
 				out.write(Message.SET_MAX_DISTANCE.ordinal());
-				out.writeFloat((float) valueNumber);
+				out.writeFloat((float) distance);
 				out.flush();
 			} catch (IOException e) {
 				ioException();
 			}
 		}
+	}
+	
+	public void setBadDelta(double badDelta) {
+		this.badDelta = badDelta;
 	}
 	
 	@Override
@@ -200,12 +205,18 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 	}
 
 	@Override
-	public float calculateWeight(RangeReading firstRange, RangeReading secondRange) {
-		if((firstRange.getValue() < 0 || firstRange.getValue() > MAX_RELIABLE_RANGE_READING) && secondRange.getValue() > MAX_RELIABLE_RANGE_READING) return 1;
-		if(firstRange.getValue() < 0) return 0;
-		final double delta = Math.abs(firstRange.getValue() - secondRange.getValue());
-		if(Double.isInfinite(delta)) return 0;
-		return (float) (delta < MAX_RELIABLE_RANGE_READING ? (MAX_RELIABLE_RANGE_READING-delta)/MAX_RELIABLE_RANGE_READING: 1/delta);
+	public float calculateWeight(RangeReading robotRange, RangeReading mapRange) {
+		if(robotRange.getValue() < 0 || mapRange.getValue() < 0) return 0;
+		if(Double.isInfinite(robotRange.getValue()) && Double.isInfinite(mapRange.getValue())) return 1;
+		final double robotValue;
+		if(Double.isInfinite(robotRange.getValue()) || robotRange.getValue() > MAX_RELIABLE_RANGE_READING) robotValue = MAX_RELIABLE_RANGE_READING;
+		else robotValue = robotRange.getValue();
+		final double mapValue;
+		if(Double.isInfinite(mapRange.getValue()) || mapRange.getValue() > MAX_RELIABLE_RANGE_READING) mapValue = MAX_RELIABLE_RANGE_READING;
+		else mapValue = mapRange.getValue();
+		final double delta = Math.abs(robotValue - mapValue);
+		if(delta > badDelta) return 0.0f;
+		return (float) (1.0d - delta / badDelta);
 	}
 
 	
