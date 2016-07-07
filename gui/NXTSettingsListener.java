@@ -2,9 +2,6 @@ package gui;
 
 import aima.core.robotics.impl.MonteCarloLocalization;
 import aima.core.robotics.impl.map.MclCartesianPlot2D;
-import aima.core.robotics.impl.simple.SimpleMove;
-import aima.core.robotics.impl.simple.SimpleRangeReading;
-import aima.core.robotics.impl.simple.VirtualRobot;
 import aima.gui.applications.robotics.components.Settings;
 import bot.Connector;
 import localization.NXTMove;

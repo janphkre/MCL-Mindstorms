@@ -71,5 +71,11 @@ public class NXTRobotGui implements IRobotGui {
         });
         thread.start();
 	}
+
+	@Override
+	public String getButtonString() {
+		if(connector.isConnected()) return "Reconnect Robot";
+		return DEFAULT_BUTTON_STRING;
+	}
 	
 }

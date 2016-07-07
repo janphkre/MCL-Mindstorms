@@ -8,7 +8,7 @@ import java.util.concurrent.SynchronousQueue;
 import aima.core.robotics.IMclRobot;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.RangeReading;
-import aima.core.robotics.impl.simple.SimplePose;
+import aima.gui.applications.robotics.components.AnglePanel;
 import gui.NXTRobotGui;
 import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.NXTComm;
@@ -18,7 +18,6 @@ import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
 import localization.NXTMove;
 import localization.NXTRangeReading;
-import aima.gui.applications.robotics.components.AnglePanel;
 
 public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
 	
