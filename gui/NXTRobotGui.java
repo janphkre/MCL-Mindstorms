@@ -35,8 +35,8 @@ public class NXTRobotGui implements IRobotGui {
 	                                                JOptionPane.OK_CANCEL_OPTION);
 	                pane.createDialog(null, robotDataFrameTitle).setVisible(true);
 	   
-	    if(pane.getValue() instanceof Integer){
-	            if(((Integer)pane.getValue()).intValue() == JOptionPane.OK_OPTION){
+	    if(pane.getValue() instanceof Integer) {
+	            if(((Integer)pane.getValue()).intValue() == JOptionPane.OK_OPTION) {
 	            	connector.connect(robot_Name.getText(), program.getText());
 	            	return connector.isConnected();
 	            }
@@ -46,11 +46,8 @@ public class NXTRobotGui implements IRobotGui {
 	}
 	private void activateSystemStyle() {
 		try {
-			
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		} catch (Exception e) { }
 	}
 
 	@Override
