@@ -23,6 +23,15 @@ import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.MoveListener;
 import lejos.robotics.navigation.MoveProvider;
 
+/**
+ * A basic daemon that is meant to run on the NXT to be able to control the robot for the Monte-Carlo-Localization.<br/>
+ * First it awaits a bluetooth connection via {@code NXTConnection.PACKET} and awaits commands over that connection afterwards.
+ * 
+ * @author Arno von Borries
+ * @author Jan Phillip Kretzschmar
+ * @author Andreas Walscheid
+ *
+ */
 public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	
 	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_MOVE, RANGES, MOVE, MOVE_END};
@@ -38,7 +47,9 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private static final double TRACK_WIDTH= 16.1d;
 	private static final double ROTATE_SPEED = 100d;
 	private static final double TRAVEL_SPEED = 50d;
-	
+	private static final int COLOR_CUTOFF = 5;
+	private static final int LIGHT_CUTOFF = 40;
+	private static final int ROTATION_START_ANGLE = 5;
 	
 	private Random rand = new Random();
 	private boolean running = false;
@@ -56,10 +67,17 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private float minDistance;
 	private float maxDistance;
 	
+	/**
+	 * Creates a new instance of the MclDaemon and runs it.
+	 * @param args unused.
+	 */
 	public static void main(String[] args) {
 		(new MclDaemon()).run();
 	}
 
+	/**
+	 * Initializes the daemon and awaits a bluetooth connection via {@code NXTConnection.PACKET}.
+	 */
 	public MclDaemon() {
 		pilot = new DifferentialPilot(WHEEL_DIAMETER,TRACK_WIDTH,LEFT_MOTOR,RIGHT_MOTOR,false);
 		pilot.setRotateSpeed(ROTATE_SPEED);
@@ -85,18 +103,22 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		System.exit(0);
 	}
 	
+	/**
+	 * As a move the robot follows a line.
+	 * @throws IOException
+	 */
 	private void performMove() throws IOException {
 		float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
 		float delta = 0f;
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
-			if(color.getColorID() <= 5 || light.readValue() <= 40) {
-        		int i = 5;
-				while ((color.getColorID() <= 5 || light.readValue() <= 40) && running) {
+			if(color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) {
+        		int i = ROTATION_START_ANGLE;
+				while ((color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) && running) {
 					delta += pilot.getMovement().getDistanceTraveled();
 					pilot.stop();
 					pilot.rotate(i,true);
-					while ((color.getColorID() <= 5 || light.readValue() <= 40) && pilot.isMoving() && running) Thread.yield();
+					while ((color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) && pilot.isMoving() && running) Thread.yield();
 					pilot.stop();
 					i *= -2;
 					i = i % 360;
@@ -105,13 +127,13 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
         	}
         }
         pilot.stop();
-        while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before this message! TODO: Any better ideas/implementation of a "semaphore" for synchronization?
-        moveStartCounter = 0;
-        moveStopCounter = 0;
+        while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization?
         synchronized(out) {
 			out.writeByte(Message.MOVE_END.ordinal());
 			out.flush();
 		}
+        moveStartCounter = 0;
+        moveStopCounter = 0;
 	}
 	
 	private void readRanges() throws IOException {
