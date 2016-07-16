@@ -55,7 +55,6 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	
 	private float minDistance;
 	private float maxDistance;
-	//private float[] rangeAngles = {-90f,-45f,0f,45f,90f};
 	
 	public static void main(String[] args) {
 		(new MclDaemon()).run();
@@ -67,7 +66,6 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		pilot.setTravelSpeed(TRAVEL_SPEED);
 		RangeFinder sonic = new UltrasonicSensor(ULTRASONIC_PORT);
 		scanner = new RotatingRangeScanner(HEAD_MOTOR, sonic, HEAD_GEAR_RATIO);
-		//scanner.setAngles(rangeAngles);
 		color = new ColorHTSensor(COLOR_PORT);
 		light = new LightSensor(LIGHT_PORT);
 		
@@ -80,53 +78,14 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		pilot.addMoveListener(this);
 	}
 	
-	@Override
-	public void run() {
-		running = true;
-    	Button.ESCAPE.addButtonListener(this);
-    	while(running) {
-			try {
-				final Message message = Message.values()[in.readByte()];
-				switch(message) {
-				case GET_MOVE:
-					System.out.println("MOVE");
-					performMove();
-					break;	
-				case GET_RANGES:
-					System.out.println("RANGES");
-					final RangeReadings ranges = scanner.getRangeValues();
-					synchronized(out) {
-						out.writeByte(Message.RANGES.ordinal());
-						ranges.dumpObject(out);
-						out.flush();
-					}
-					break;
-				case SET_ANGLES:
-					final int count = in.readShort();
-					float[] rangeAngles = new float[count];
-					for(int i=0;i<count;i++) {
-						rangeAngles[i] = in.readFloat();
-					}
-					scanner.setAngles(rangeAngles);
-					break;
-				case SET_MIN_DISTANCE:
-					minDistance = in.readFloat();
-					break;
-				case SET_MAX_DISTANCE:
-					maxDistance = in.readFloat();
-					break;
-				default:
-					System.out.println("MESSAGE:"+message.ordinal()+"?");
-				}
-			} catch (IOException e) {
-				exception();
-			}
-			System.gc();
-		}
-    	
+	private void exception() {
+		System.out.println("IO Exception");
+		running = false;
+		pilot.stop();
+		System.exit(0);
 	}
 	
-	private void performMove() {
+	private void performMove() throws IOException {
 		float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
 		float delta = 0f;
 		pilot.forward();
@@ -147,14 +106,69 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
         }
         pilot.stop();
         while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before this message! TODO: Any better ideas/implementation of a "semaphore" for synchronization?
+        moveStartCounter = 0;
+        moveStopCounter = 0;
         synchronized(out) {
+			out.writeByte(Message.MOVE_END.ordinal());
+			out.flush();
+		}
+	}
+	
+	private void readRanges() throws IOException {
+		final RangeReadings ranges = scanner.getRangeValues();
+		synchronized(out) {
+			out.writeByte(Message.RANGES.ordinal());
+			ranges.dumpObject(out);
+			out.flush();
+		}
+	}
+	
+	private void setAngles() throws IOException {
+		final int count = in.readShort();
+		float[] rangeAngles = new float[count];
+		for(int i=0;i<count;i++) {
+			rangeAngles[i] = in.readFloat();
+		}
+		scanner.setAngles(rangeAngles);
+	}
+	
+	@Override
+	public void run() {
+		running = true;
+    	Button.ESCAPE.addButtonListener(this);
+    	while(running) {
 			try {
-				out.writeByte(Message.MOVE_END.ordinal());
-				out.flush();
+				final Message message = Message.values()[in.readByte()];
+				switch(message) {
+				case GET_MOVE:
+					System.out.println("MOVE");
+					performMove();
+					break;	
+				case GET_RANGES:
+					System.out.println("RANGES");
+					readRanges();
+					break;
+				case SET_ANGLES:
+					System.out.println("ANGLES");
+					setAngles();
+					break;
+				case SET_MIN_DISTANCE:
+					System.out.println("MIN_DISTANCE");
+					minDistance = in.readFloat();
+					break;
+				case SET_MAX_DISTANCE:
+					System.out.println("MAX_DISTANCE");
+					maxDistance = in.readFloat();
+					break;
+				default:
+					System.out.println("MESSAGE:"+message.ordinal()+"?");
+				}
 			} catch (IOException e) {
 				exception();
 			}
+			System.gc();
 		}
+    	
 	}
 	
 	@Override
@@ -186,12 +200,4 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		pilot.stop();
 		System.exit(0);
 	}
-	
-	private void exception() {
-		System.out.println("IO Exception");
-		running = false;
-		pilot.stop();
-		System.exit(0);
-	}
-	
 }

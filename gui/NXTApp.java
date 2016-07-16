@@ -1,5 +1,7 @@
 package gui;
 
+import java.io.File;
+
 import aima.core.robotics.impl.MonteCarloLocalization;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.RangeReading;
@@ -16,17 +18,14 @@ import localization.NXTRangeReading;
 import localization.NXTRangeReadingFactory;
 
 public class NXTApp extends MonteCarloLocalizationApp  {
-
-	public NXTApp() {
-		super();
-	}
 	
-	public NXTApp(String[] args) {
-		super(args);
+	public NXTApp(File settingsFile) {
+		super(settingsFile);
 	}
 
 	public static void main(String[] args) {
-		NXTApp app = new NXTApp(args);
+		File settingsFile = args.length > 0 ? new File(args[0]) : DEFAULT_SETTINGS_FILE;
+		NXTApp app = new NXTApp(settingsFile);
 		app.constructApplicationFrame();
 		app.show();
 	}

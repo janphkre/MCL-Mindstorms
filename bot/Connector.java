@@ -264,6 +264,7 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 				case MOVE_END://As we want to update the particles only once after the complete move has come to an end, we need some other message too.
 					moveQueue.put(currentMove);
 					currentMove = new NXTMove();
+					System.out.println("MOVE_END");//TODO: TEST!
 					break;
 				default:
 				}
