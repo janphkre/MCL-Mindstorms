@@ -7,6 +7,14 @@ import javax.swing.UIManager;
 import aima.gui.applications.robotics.components.IRobotGui;
 import bot.Connector;
 
+/**
+ * Manages a {@link Connector} by implementing {@link IRobotGui}.
+ * 
+ * @author Arno von Borries
+ * @author Jan Phillip Kretzschmar
+ * @author Andreas Walscheid
+ *
+ */
 public class NXTRobotGui implements IRobotGui {
 
 	private Connector connector;
@@ -14,9 +22,35 @@ public class NXTRobotGui implements IRobotGui {
 	private JTextField program;
 	private String robotDataFrameTitle = "Robot";
 	
+	/**
+	 * @param connector the NXT robot to be managed.
+	 */
 	public NXTRobotGui(Connector connector) {
 		this.connector = connector;
 		connector.registerGui(this);
+	}
+	
+	/**
+	 * Tries to activate the system default look and feel.
+	 */
+	private void activateSystemStyle() {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) { }
+	}
+	
+	/**
+	 * Displays a message box without waiting for the message box to close.
+	 * @param message the message to be shown.
+	 */
+	public void showError(final String message) {
+		Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+               JOptionPane.showMessageDialog(null,message);
+            }
+        });
+        thread.start();
 	}
 	
 	@Override
@@ -30,10 +64,8 @@ public class NXTRobotGui implements IRobotGui {
 		program = new JTextField();
 		Object[] robotData = {"Robot Name:", robot_Name,"Program", program};
 	      
-		JOptionPane pane = new JOptionPane( robotData, 
-	                                                JOptionPane.PLAIN_MESSAGE, 
-	                                                JOptionPane.OK_CANCEL_OPTION);
-	                pane.createDialog(null, robotDataFrameTitle).setVisible(true);
+		JOptionPane pane = new JOptionPane( robotData, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+	    pane.createDialog(null, robotDataFrameTitle).setVisible(true);
 	   
 	    if(pane.getValue() instanceof Integer) {
 	            if(((Integer)pane.getValue()).intValue() == JOptionPane.OK_OPTION) {
@@ -42,31 +74,11 @@ public class NXTRobotGui implements IRobotGui {
 	            }
 	    }
 		return false;
-
 	}
-	private void activateSystemStyle() {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) { }
-	}
-
+	
 	@Override
 	public void destructRobot() {
 		connector.close();
-	}
-	
-	/**
-	 * Displays a Message Box in a new Thread
-	 * @param message to be shown
-	 */
-	public void showError(final String message){
-		Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-               JOptionPane.showMessageDialog(null,message);
-            }
-        });
-        thread.start();
 	}
 
 	@Override

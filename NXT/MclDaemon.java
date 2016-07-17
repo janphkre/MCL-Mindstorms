@@ -57,13 +57,15 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private RangeScanner scanner;
 	private ColorHTSensor color;
 	private LightSensor light;
-	
+	private NXTConnection conn;
 	private DataInputStream in;
-	private DataOutputStream out;//the output has to be synchronized, as it is used by the MoveListener too.
-	
+	/**
+	 * The output should be synchronized as it is used by the MoveListener too. Use:<br/>
+	 * {code synchronized(out) {...}}
+	 */
+	private DataOutputStream out;
 	private int moveStartCounter = 0;
 	private int moveStopCounter = 0;
-	
 	private float minDistance;
 	private float maxDistance;
 	
@@ -88,7 +90,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		light = new LightSensor(LIGHT_PORT);
 		
 		NXTCommConnector connector = Bluetooth.getConnector();
-		NXTConnection conn = connector.waitForConnection(0, NXTConnection.PACKET);
+		conn = connector.waitForConnection(0, NXTConnection.PACKET);
 		in = conn.openDataInputStream();
 		out = conn.openDataOutputStream();
 		System.out.println("Connected");
@@ -96,11 +98,19 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		pilot.addMoveListener(this);
 	}
 	
-	private void exception() {
-		System.out.println("IO Exception");
+	/**
+	 * 
+	 */
+	private void close() {
 		running = false;
 		pilot.stop();
+		conn.close();
 		System.exit(0);
+	}
+	
+	private void exception() {
+		System.out.println("IO Exception");
+		close();
 	}
 	
 	/**
@@ -127,7 +137,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
         	}
         }
         pilot.stop();
-        while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization?
+        while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
         synchronized(out) {
 			out.writeByte(Message.MOVE_END.ordinal());
 			out.flush();
@@ -190,7 +200,6 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 			}
 			System.gc();
 		}
-    	
 	}
 	
 	@Override
@@ -218,8 +227,6 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	@Override
 	public void buttonReleased(Button b) {
 		System.out.println("Exit");
-		running = false;
-		pilot.stop();
-		System.exit(0);
+		close();
 	}
 }

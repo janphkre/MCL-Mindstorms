@@ -17,17 +17,32 @@ import localization.NXTPositionFactory;
 import localization.NXTRangeReading;
 import localization.NXTRangeReadingFactory;
 
+/**
+ * Entails {@link MonteCarloLocalizationApp} to be able to use the {@link GenericMonteCarloLocalization2DApp} for the NXT environment. 
+ * 
+ * @author Arno von Borries
+ * @author Jan Phillip Kretzschmar
+ * @author Andreas Walscheid
+ *
+ */
 public class NXTApp extends MonteCarloLocalizationApp  {
-	
-	public NXTApp(File settingsFile) {
-		super(settingsFile);
-	}
 
+	/**
+	 * Starts the application.
+	 * @param args a path to the file containing the settings may be passed as the first argument. Otherwise the default settings file {@code mcl_settings.cache} in the working directory is used.
+	 */
 	public static void main(String[] args) {
 		File settingsFile = args.length > 0 ? new File(args[0]) : DEFAULT_SETTINGS_FILE;
 		NXTApp app = new NXTApp(settingsFile);
 		app.constructApplicationFrame();
 		app.show();
+	}
+	
+	/**
+	 * @param settingsFile the file containing the settings for this Monte-Carlo-Localization.
+	 */
+	public NXTApp(File settingsFile) {
+		super(settingsFile);
 	}
 	
 	@Override
@@ -48,6 +63,6 @@ public class NXTApp extends MonteCarloLocalizationApp  {
 		settingsListener.setMcl(mcl);
 		settingsListener.setRobot(robot);
 		settingsGui.notifyAllListeners();
-		app.show();
+		angles.notifyChangeListener();
 	}
 }

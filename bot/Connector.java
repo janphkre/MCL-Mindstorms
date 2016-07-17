@@ -8,7 +8,7 @@ import java.util.concurrent.SynchronousQueue;
 import aima.core.robotics.IMclRobot;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.RangeReading;
-import aima.gui.applications.robotics.components.AnglePanel;
+import aima.gui.applications.robotics.components.AnglePanel.ChangeListener;
 import gui.NXTRobotGui;
 import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.NXTComm;
@@ -19,7 +19,17 @@ import lejos.robotics.navigation.Move;
 import localization.NXTMove;
 import localization.NXTRangeReading;
 
-public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
+/**
+ * This class establishes and manages the connection to the NXT robot.<br/>
+ * Thus it implements {@link IMclRobot} to let the Monte-Carlo-Localization control the robot.
+ * Furthermore {@link ChangeListener} is implemented to inform the robot when it should measure the range in different angles.
+ * 
+ * @author Arno von Borries
+ * @author Jan Phillip Kretzschmar
+ * @author Andreas Walscheid
+ *
+ */
+public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
 	
 	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
 	public static final double MAX_RANGE_READING = 255.0d;//cm
@@ -42,35 +52,60 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 	private float maxDistance;
 	private double badDelta;
 	
+	/**
+	 * @param rangeReadingAngles the initial angles in which the ranges are read.
+	 */
 	public Connector(Angle[] rangeReadingAngles) {
 		this.rangeReadingAngles = rangeReadingAngles;
 		this.rangeQueue = new SynchronousQueue<RangeReading[]>();
 		this.moveQueue = new SynchronousQueue<NXTMove>();
 	}
 	
+	/**
+	 * Sets the {@link NXTRobotGui} which manages the robot.
+	 * @param gui the GUI which manages the robot.
+	 */
 	public void registerGui(NXTRobotGui gui) {
 		this.gui = gui;
 	}
 	
+	/**
+	 * Returns the connection status with the robot.
+	 * @return true if a connection is established with the robot.
+	 */
 	public boolean isConnected() {
 		return connected;
 	}
 	
+	/**
+	 * Closes the connection with the robot.
+	 */
 	public void close() {
 		if(connected) {
 			try {
 				connection.close();
-			} catch (IOException e) { }
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			connection = null;
+			connected=false;
 		}
-		connection = null;
-		connected=false;
+		
 	}
 	
+	/**
+	 * Handles an {@code IOException}.
+	 */
 	private void ioException() {
 		close();
 		gui.showError("IOException! Did the Bot turn off?");
 	}
 	
+	/**
+	 * Tries to connect to a robot with the given name and start the specified program (which is a {@code MClDaemon} on the NXT.
+	 * @param name the name of the NXT robot.
+	 * @param program the name of the MCLDaemon program on the NXT.
+	 */
 	public void connect(String name, String program) {
 		connection = new NXTConnector();
 		
@@ -88,17 +123,23 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 			try {
 				command.disconnect();
 				connection.close();
-			} catch (IOException f) { }
+			} catch (IOException f) {
+				//ignore the exception
+			}
 			connected = false;
 			return;
 		}
 		try {
 			command.disconnect();
 			connection.close();
-		} catch (IOException e) { }
+		} catch (IOException e) {
+			//ignore the exception
+		}
 		try {
 			Thread.sleep(2000); // Wait 2 seconds for program to start 
-		} catch (InterruptedException e) { }
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		
 		//CONNECT NORMAL:
 		connection = new NXTConnector();
@@ -136,6 +177,10 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
     	connectionThread.start();
 	}
 	
+	/**
+	 * Sets the minimum move distance and sends it to the robot if one is connected.
+	 * @param distance the distance to be set.
+	 */
 	public void setMinMoveDistance(double distance) {
 		minDistance = (float) distance;
 		if(connected) {
@@ -149,6 +194,10 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 		}
 	}
 	
+	/**
+	 * Sets the maximum move distance and sends it to the robot if one is connected.
+	 * @param distance the distance to be set.
+	 */
 	public void setMaxMoveDistance(double distance) {
 		maxDistance = (float) distance;
 		if(connected) {
@@ -162,8 +211,12 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 		}
 	}
 	
-	public void setBadDelta(double badDelta) {
-		this.badDelta = badDelta;
+	/**
+	 * Sets the bad delta for the calculation of the weight.
+	 * @param delta the delta to be set.
+	 */
+	public void setBadDelta(double delta) {
+		badDelta = delta;
 	}
 	
 	@Override
@@ -255,13 +308,15 @@ public class Connector implements AnglePanel.ChangeListener, IMclRobot<Angle,NXT
 					}
 					rangeQueue.put(ranges);
 					break;
-				case MOVE://Move is posted after each segment of a Move has stopped.
+				case MOVE:
+					//Move is posted after each segment of a move has stopped.
 					Move move = new Move(false, 0, 0);
 					move.loadObject(in);
 					currentMove.add(move);
 					System.out.println(move.getMoveType());//TODO: TEST!
 					break;
-				case MOVE_END://As we want to update the particles only once after the complete move has come to an end, we need some other message too.
+				case MOVE_END:
+					//As the particles shall only be updated once after the complete move has come to an end, this message is needed too.
 					moveQueue.put(currentMove);
 					currentMove = new NXTMove();
 					System.out.println("MOVE_END");//TODO: TEST!
