@@ -34,7 +34,7 @@ import lejos.robotics.navigation.MoveProvider;
  */
 public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	
-	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_MOVE, RANGES, MOVE, MOVE_END};
+	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
 	private static final RegulatedMotor HEAD_MOTOR = Motor.C;
 	private static final RegulatedMotor LEFT_MOTOR = Motor.A;
 	private static final RegulatedMotor RIGHT_MOTOR = Motor.B;
@@ -64,8 +64,6 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * {code synchronized(out) {...}}
 	 */
 	private DataOutputStream out;
-	private int moveStartCounter = 0;
-	private int moveStopCounter = 0;
 	private float minDistance;
 	private float maxDistance;
 	
@@ -117,13 +115,13 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * As a move the robot follows a line.
 	 * @throws IOException
 	 */
-	private void performMove() throws IOException {
-		float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
+	private void performLineMove() throws IOException {
+		final float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
 		float delta = 0f;
 		pilot.reset();
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
-			/*if(color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) {
+			if(color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) {
         		int i = ROTATION_START_ANGLE;
 				while ((color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) && running) {
 					delta += pilot.getMovement().getDistanceTraveled();
@@ -135,26 +133,31 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 					i = i % 360;
 				}
 				pilot.forward();
-        	}*/
-        	Thread.yield();
+        	}
         }
         pilot.stop();
-        while(moveStartCounter != moveStopCounter) {
-        	try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-    		//System.out.println(moveStartCounter+":"+moveStopCounter);
-        	Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
-        }
+        while(pilot.isMoving()) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
         synchronized(out) {
 			out.writeByte(Message.MOVE_END.ordinal());
 			out.flush();
 		}
-        moveStartCounter = 0;
-        moveStopCounter = 0;
+	}
+	
+	/**
+	 * As a move the robot rotates a random angle and goes forward a random distance.
+	 * @throws IOException
+	 */
+	private void performRandomMove() throws IOException {
+		final float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
+		pilot.reset();
+		pilot.forward();
+        while(pilot.getMovement().getDistanceTraveled() < targetdist && running) Thread.yield();
+        pilot.stop();
+        while(pilot.isMoving()) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
+        synchronized(out) {
+			out.writeByte(Message.MOVE_END.ordinal());
+			out.flush();
+		}
 	}
 	
 	private void readRanges() throws IOException {
@@ -181,12 +184,18 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
     	Button.ESCAPE.addButtonListener(this);
     	while(running) {
 			try {
-				final Message message = Message.values()[in.readByte()];
+				int i = in.readByte();
+				System.out.println(i);
+				/*final Message message = Message.values()[i];
 				switch(message) {
-				case GET_MOVE:
-					System.out.println("MOVE");
-					performMove();
-					break;	
+				case GET_RANDOM_MOVE:
+					System.out.println("RANDOM");
+					performRandomMove();
+					break;
+				case GET_LINE_MOVE:
+					System.out.println("LINE");
+					performLineMove();
+					break;
 				case GET_RANGES:
 					System.out.println("RANGES");
 					readRanges();
@@ -197,17 +206,15 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 					break;
 				case SET_MIN_DISTANCE:
 					System.out.println("MIN_DISTANCE");
-					minDistance = in.readFloat();
 					System.out.println(minDistance+"");
 					break;
 				case SET_MAX_DISTANCE:
 					System.out.println("MAX_DISTANCE");
-					maxDistance = in.readFloat();
 					System.out.println(maxDistance+"");
 					break;
 				default:
 					System.out.println("MESSAGE:"+message.ordinal()+"?");
-				}
+				}*/
 			} catch (IOException e) {
 				exception();
 			}
@@ -216,14 +223,10 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	}
 	
 	@Override
-	public void moveStarted(Move event, MoveProvider mp) {
-		moveStartCounter++;
-		System.out.println(event.getMoveType().toString());
-	}
+	public void moveStarted(Move event, MoveProvider mp) { }
 
 	@Override
 	public void moveStopped(Move event, MoveProvider mp) {
-		System.out.println(event.getMoveType().toString());
 		synchronized(out) {
 			try {
 				out.writeByte(Message.MOVE.ordinal());
@@ -233,11 +236,10 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 				exception();
 			}
 		}
-		moveStopCounter++;
 	}
 
 	@Override
-	public void buttonPressed(Button b) {}
+	public void buttonPressed(Button b) { }
 
 	@Override
 	public void buttonReleased(Button b) {

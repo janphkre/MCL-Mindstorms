@@ -34,7 +34,9 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
 	public static final double MAX_RANGE_READING = 255.0d;//cm
 	
-	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_MOVE, RANGES, MOVE, MOVE_END};
+	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
+	
+	private Message moveType = Message.GET_RANDOM_MOVE;
 	
 	private Angle[] rangeReadingAngles;
 	private boolean connected = false;
@@ -44,6 +46,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	private Thread connectionThread;
 	private SynchronousQueue<RangeReading[]> rangeQueue;
 	private SynchronousQueue<NXTMove> moveQueue;
+	
 	
 	private float minDistance;
 	private float maxDistance;
@@ -265,7 +268,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 		if(!connected) return null;
 		synchronized(out) {
 			try {
-				out.write(Message.GET_MOVE.ordinal());
+				out.write(moveType.ordinal());
 				out.flush();
 			} catch (IOException e) {
 				ioException();
