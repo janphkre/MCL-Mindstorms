@@ -5,6 +5,7 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 
 import aima.gui.applications.robotics.components.IRobotGui;
+import aima.gui.applications.robotics.util.GuiBase;
 import bot.Connector;
 
 /**
@@ -27,35 +28,11 @@ public class NXTRobotGui implements IRobotGui {
 	 */
 	public NXTRobotGui(Connector connector) {
 		this.connector = connector;
-		connector.registerGui(this);
-	}
-	
-	/**
-	 * Tries to activate the system default look and feel.
-	 */
-	private void activateSystemStyle() {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) { }
-	}
-	
-	/**
-	 * Displays a message box without waiting for the message box to close.
-	 * @param message the message to be shown.
-	 */
-	public void showError(final String message) {
-		Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-               JOptionPane.showMessageDialog(null,message);
-            }
-        });
-        thread.start();
 	}
 	
 	@Override
 	public boolean initializeRobot() {
-		activateSystemStyle();
+		GuiBase.activateSystemStyle();
 		
 		UIManager.put("OptionPane.cancelButtonText", "Abort");
 		UIManager.put("OptionPane.okButtonText", "Connect");

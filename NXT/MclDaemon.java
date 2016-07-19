@@ -120,9 +120,10 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private void performMove() throws IOException {
 		float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
 		float delta = 0f;
+		pilot.reset();
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
-			if(color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) {
+			/*if(color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) {
         		int i = ROTATION_START_ANGLE;
 				while ((color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) && running) {
 					delta += pilot.getMovement().getDistanceTraveled();
@@ -134,10 +135,20 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 					i = i % 360;
 				}
 				pilot.forward();
-        	}
+        	}*/
+        	Thread.yield();
         }
         pilot.stop();
-        while(moveStartCounter != moveStopCounter) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
+        while(moveStartCounter != moveStopCounter) {
+        	try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		//System.out.println(moveStartCounter+":"+moveStopCounter);
+        	Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
+        }
         synchronized(out) {
 			out.writeByte(Message.MOVE_END.ordinal());
 			out.flush();
@@ -156,7 +167,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	}
 	
 	private void setAngles() throws IOException {
-		final int count = in.readShort();
+		final int count = in.readInt();
 		float[] rangeAngles = new float[count];
 		for(int i=0;i<count;i++) {
 			rangeAngles[i] = in.readFloat();
@@ -187,10 +198,12 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 				case SET_MIN_DISTANCE:
 					System.out.println("MIN_DISTANCE");
 					minDistance = in.readFloat();
+					System.out.println(minDistance+"");
 					break;
 				case SET_MAX_DISTANCE:
 					System.out.println("MAX_DISTANCE");
 					maxDistance = in.readFloat();
+					System.out.println(maxDistance+"");
 					break;
 				default:
 					System.out.println("MESSAGE:"+message.ordinal()+"?");
@@ -205,10 +218,12 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	@Override
 	public void moveStarted(Move event, MoveProvider mp) {
 		moveStartCounter++;
+		System.out.println(event.getMoveType().toString());
 	}
 
 	@Override
 	public void moveStopped(Move event, MoveProvider mp) {
+		System.out.println(event.getMoveType().toString());
 		synchronized(out) {
 			try {
 				out.writeByte(Message.MOVE.ordinal());

@@ -5,11 +5,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.concurrent.SynchronousQueue;
 
-import aima.core.robotics.IMclRobot;
-import aima.core.robotics.impl.datatypes.Angle;
-import aima.core.robotics.impl.datatypes.RangeReading;
-import aima.gui.applications.robotics.components.AnglePanel.ChangeListener;
-import gui.NXTRobotGui;
 import lejos.nxt.remote.NXTCommand;
 import lejos.pc.comm.NXTComm;
 import lejos.pc.comm.NXTCommFactory;
@@ -18,6 +13,11 @@ import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
 import localization.NXTMove;
 import localization.NXTRangeReading;
+import aima.core.robotics.IMclRobot;
+import aima.core.robotics.impl.datatypes.Angle;
+import aima.core.robotics.impl.datatypes.RangeReading;
+import aima.gui.applications.robotics.components.AnglePanel.ChangeListener;
+import aima.gui.applications.robotics.util.GuiBase;
 
 /**
  * This class establishes and manages the connection to the NXT robot.<br/>
@@ -37,9 +37,6 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_MOVE, RANGES, MOVE, MOVE_END};
 	
 	private Angle[] rangeReadingAngles;
-	
-	private NXTRobotGui gui;
-	
 	private boolean connected = false;
 	private NXTConnector connection;
 	private DataInputStream in; //only used in the second thread. No synchronization!
@@ -59,14 +56,6 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 		this.rangeReadingAngles = rangeReadingAngles;
 		this.rangeQueue = new SynchronousQueue<RangeReading[]>();
 		this.moveQueue = new SynchronousQueue<NXTMove>();
-	}
-	
-	/**
-	 * Sets the {@link NXTRobotGui} which manages the robot.
-	 * @param gui the GUI which manages the robot.
-	 */
-	public void registerGui(NXTRobotGui gui) {
-		this.gui = gui;
 	}
 	
 	/**
@@ -98,7 +87,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	 */
 	private void ioException() {
 		close();
-		gui.showError("IOException! Did the Bot turn off?");
+		GuiBase.showMessageBox("IOException! Did the Bot turn off?");
 	}
 	
 	/**
@@ -111,7 +100,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 		
 		connection = new NXTConnector();
 		if(!connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.LCP)) {
-			gui.showError("Failed to connect to the NXT.");
+			GuiBase.showMessageBox("Failed to connect to the NXT.");
 			connected = false;
 			return;
 		}
@@ -119,7 +108,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 		try {
 			command.startProgram(program);
 		} catch (IOException e) {
-			gui.showError("Failed to start the program.");
+			GuiBase.showMessageBox("Failed to start the program.");
 			try {
 				command.disconnect();
 				connection.close();
@@ -153,12 +142,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 		connected = true;
 		
 		try{
-			out.write(Message.SET_ANGLES.ordinal());
-			out.writeInt(rangeReadingAngles.length);
-			for(Angle angle: rangeReadingAngles) {
-				out.writeFloat((float) angle.getValue());
-			}
-			out.flush();
+			sendAngles();
 			out.write(Message.SET_MIN_DISTANCE.ordinal());
 			out.writeFloat(minDistance);
 			out.flush();
@@ -175,6 +159,15 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
     	connectionThread = new Thread(this);
     	connectionThread.setDaemon(true);
     	connectionThread.start();
+	}
+	
+	private void sendAngles() throws IOException {
+		out.write(Message.SET_ANGLES.ordinal());
+		out.writeInt(rangeReadingAngles.length);
+		for(Angle angle: rangeReadingAngles) {
+			out.writeFloat((float) Math.toDegrees(angle.getValue()));
+		}
+		out.flush();
 	}
 	
 	/**
@@ -224,12 +217,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 		rangeReadingAngles = angles;
 		if(connected) {
 			try {
-				out.write(Message.SET_ANGLES.ordinal());
-				out.writeInt(rangeReadingAngles.length);
-				for(Angle angle: angles) {
-					out.writeFloat((float) angle.getValue());
-				}
-				out.flush();
+				sendAngles();
 			} catch (IOException e) {
 				ioException();
 			}

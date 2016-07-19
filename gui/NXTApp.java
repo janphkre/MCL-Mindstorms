@@ -54,15 +54,16 @@ public class NXTApp extends MonteCarloLocalizationApp  {
 		settingsGui.registerSpecialSetting(RANGE_READING_ANGLES_KEY, angles);
 		
 		MclCartesianPlot2D<NXTPosition, NXTMove, RangeReading> map = new MclCartesianPlot2D<NXTPosition,NXTMove,RangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory());
-		Connector robot = new Connector(angles.getSetting());
+		Connector robot = new Connector(angles.getAngles());
+		robotGui = new NXTRobotGui(robot);
 		MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, RangeReading>(map, robot);
-		app = new GenericMonteCarloLocalization2DApp<NXTPosition,NXTMove,NXTRangeReading>(mcl, map, robot, new NXTRobotGui(robot), settingsGui);
+		app = new GenericMonteCarloLocalization2DApp<NXTPosition,NXTMove,NXTRangeReading>(mcl, map, robot, robotGui, settingsGui);
 		
 		angles.setChangeListener(robot);
 		settingsListener.setMap(map);
 		settingsListener.setMcl(mcl);
 		settingsListener.setRobot(robot);
 		settingsGui.notifyAllListeners();
-		angles.notifyChangeListener();
+		settingsGui.buildGui();
 	}
 }
