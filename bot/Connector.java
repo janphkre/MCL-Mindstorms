@@ -37,7 +37,6 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
 	
 	private Message moveType = Message.GET_RANDOM_MOVE;
-	
 	private Angle[] rangeReadingAngles;
 	private boolean connected = false;
 	private NXTConnector connection;
@@ -46,8 +45,6 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	private Thread connectionThread;
 	private SynchronousQueue<RangeReading[]> rangeQueue;
 	private SynchronousQueue<NXTMove> moveQueue;
-	
-	
 	private float minDistance;
 	private float maxDistance;
 	private double badDelta;
@@ -303,13 +300,11 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 					Move move = new Move(false, 0, 0);
 					move.loadObject(in);
 					currentMove.add(move);
-					System.out.println(move.getMoveType());//TODO: TEST!
 					break;
 				case MOVE_END:
 					//As the particles shall only be updated once after the complete move has come to an end, this message is needed too.
 					moveQueue.put(currentMove);
 					currentMove = new NXTMove();
-					System.out.println("MOVE_END");//TODO: TEST!
 					break;
 				default:
 				}
