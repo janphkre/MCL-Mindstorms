@@ -59,6 +59,7 @@ public class NXTApp extends MonteCarloLocalizationApp  {
 		MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, RangeReading>(map, robot);
 		app = new GenericMonteCarloLocalization2DApp<NXTPosition,NXTMove,NXTRangeReading>(mcl, map, robot, robotGui, settingsGui);
 		
+		robotGui.loadSettings(settingsGui);
 		angles.setChangeListener(robot);
 		settingsListener.setMap(map);
 		settingsListener.setMcl(mcl);

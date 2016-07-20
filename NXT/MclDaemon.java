@@ -8,6 +8,7 @@ import lejos.nxt.ButtonListener;
 import lejos.nxt.LightSensor;
 import lejos.nxt.Motor;
 import lejos.nxt.SensorPort;
+import lejos.nxt.Sound;
 import lejos.nxt.UltrasonicSensor;
 import lejos.nxt.addon.ColorHTSensor;
 import lejos.nxt.comm.Bluetooth;
@@ -92,7 +93,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		in = conn.openDataInputStream();
 		out = conn.openDataOutputStream();
 		System.out.println("Connected");
-		
+		Sound.playTone(600, 100);
 		pilot.addMoveListener(this);
 	}
 	
@@ -103,6 +104,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		running = false;
 		pilot.stop();
 		conn.close();
+		Sound.beepSequence();
 		System.exit(0);
 	}
 	
@@ -118,7 +120,6 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private void performLineMove() throws IOException {
 		final float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
 		float delta = 0f;
-		pilot.reset();
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
 			if(color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) {
@@ -138,7 +139,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
         pilot.stop();
         while(pilot.isMoving()) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
         synchronized(out) {
-			out.writeByte(Message.MOVE_END.ordinal());
+			out.write(Message.MOVE_END.ordinal());
 			out.flush();
 		}
 	}
@@ -149,13 +150,13 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 */
 	private void performRandomMove() throws IOException {
 		final float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
-		pilot.reset();
+		
 		pilot.forward();
         while(pilot.getMovement().getDistanceTraveled() < targetdist && running) Thread.yield();
         pilot.stop();
         while(pilot.isMoving()) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
         synchronized(out) {
-			out.writeByte(Message.MOVE_END.ordinal());
+			out.write(Message.MOVE_END.ordinal());
 			out.flush();
 		}
 	}
@@ -163,7 +164,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private void readRanges() throws IOException {
 		final RangeReadings ranges = scanner.getRangeValues();
 		synchronized(out) {
-			out.writeByte(Message.RANGES.ordinal());
+			out.write(Message.RANGES.ordinal());
 			ranges.dumpObject(out);
 			out.flush();
 		}
@@ -184,9 +185,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
     	Button.ESCAPE.addButtonListener(this);
     	while(running) {
 			try {
-				int i = in.readByte();
-				System.out.println(i);
-				/*final Message message = Message.values()[i];
+				final Message message = Message.values()[in.read()];
 				switch(message) {
 				case GET_RANDOM_MOVE:
 					System.out.println("RANDOM");
@@ -206,15 +205,15 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 					break;
 				case SET_MIN_DISTANCE:
 					System.out.println("MIN_DISTANCE");
-					System.out.println(minDistance+"");
+					minDistance = in.readFloat();
 					break;
 				case SET_MAX_DISTANCE:
 					System.out.println("MAX_DISTANCE");
-					System.out.println(maxDistance+"");
+					maxDistance = in.readFloat();
 					break;
 				default:
 					System.out.println("MESSAGE:"+message.ordinal()+"?");
-				}*/
+				}
 			} catch (IOException e) {
 				exception();
 			}
@@ -229,7 +228,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	public void moveStopped(Move event, MoveProvider mp) {
 		synchronized(out) {
 			try {
-				out.writeByte(Message.MOVE.ordinal());
+				out.write(Message.MOVE.ordinal());
 				event.dumpObject(out);
 				out.flush();
 			} catch (IOException e) {

@@ -249,8 +249,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 
 	@Override
 	public float calculateWeight(RangeReading robotRange, RangeReading mapRange) {
-		if(robotRange.getValue() < 0 || mapRange.getValue() < 0) return 0;
-		if(Double.isInfinite(robotRange.getValue()) && Double.isInfinite(mapRange.getValue())) return 1;
+		if((robotRange.getValue() < 0 || Double.isInfinite(robotRange.getValue())) && (mapRange.getValue() < 0  || Double.isInfinite(mapRange.getValue()))) return 1;
 		final double robotValue;
 		if(Double.isInfinite(robotRange.getValue()) || robotRange.getValue() > MAX_RELIABLE_RANGE_READING) robotValue = MAX_RELIABLE_RANGE_READING;
 		else robotValue = robotRange.getValue();
