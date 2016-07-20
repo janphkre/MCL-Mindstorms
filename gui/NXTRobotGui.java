@@ -2,11 +2,9 @@ package gui;
 
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import javax.swing.UIManager;
 
 import aima.gui.applications.robotics.components.IRobotGui;
 import aima.gui.applications.robotics.components.Settings;
-import aima.gui.applications.robotics.util.GuiBase;
 import bot.Connector;
 
 /**
@@ -22,12 +20,15 @@ public class NXTRobotGui implements IRobotGui {
 	private static final String ROBOT_NAME_KEY = "ROBOT_NAME";
 	private static final String ROBOT_PROGRAM_KEY = "ROBOT_PROGRAM";
 	private static final String ROBOT_FRAME_TITLE = "NXT Connector";
+	private static final Object[] BUTTONS = {"Connect", "Abort"};
 	
 	private String robotName;
 	private String program;
 	private Connector connector;
-	private JTextField robotNameField;
-	private JTextField programField;
+	private JTextField robotNameField = new JTextField();
+	private JTextField programField = new JTextField();
+	private Object[] data = {"Robot name:", robotNameField,"Program:", programField};
+	
 	
 	/**
 	 * @param connector the NXT robot to be managed.
@@ -38,26 +39,15 @@ public class NXTRobotGui implements IRobotGui {
 	
 	@Override
 	public boolean initializeRobot() {
-		GuiBase.activateSystemStyle();
-		
-		UIManager.put("OptionPane.cancelButtonText", "Abort");
-		UIManager.put("OptionPane.okButtonText", "Connect");
-		  
-		robotNameField = new JTextField(robotName);
-		programField = new JTextField(program);
-		Object[] robotData = {"Robot name:", robotNameField,"Program:", programField};
-	      
-		JOptionPane pane = new JOptionPane( robotData, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-	    pane.createDialog(null, ROBOT_FRAME_TITLE).setVisible(true);
-	   
-	    if(pane.getValue() instanceof Integer) {
-            if(((Integer)pane.getValue()).intValue() == JOptionPane.OK_OPTION) {
-            	robotName = robotNameField.getText();
-            	program = programField.getText();
-            	connector.connect(robotName, program);
-            	return connector.isConnected();
-            }
-	    }
+		robotNameField.setText(robotName);
+		programField.setText(program);
+		final int result = JOptionPane.showOptionDialog(null, data, ROBOT_FRAME_TITLE, JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, BUTTONS, BUTTONS[0]);
+        if(result == 0) {
+        	robotName = robotNameField.getText();
+        	program = programField.getText();
+        	connector.connect(robotName, program);
+        	return connector.isConnected();
+        }
 		return false;
 	}
 	
