@@ -30,7 +30,6 @@ import aima.gui.applications.robotics.util.GuiBase;
  *
  */
 public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,AbstractRangeReading>, Runnable {
-	
 	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
 	public static final double MAX_RANGE_READING = 255.0d;//cm
 	

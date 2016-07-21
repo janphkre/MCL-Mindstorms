@@ -7,6 +7,7 @@ import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
 import aima.core.robotics.datatypes.IMclMove;
 import aima.core.util.Util;
+import aima.gui.applications.robotics.util.GuiBase;
 
 public final class NXTMove implements IMclMove<NXTMove> {
 	
@@ -63,7 +64,15 @@ public final class NXTMove implements IMclMove<NXTMove> {
 	public String toString() {
 		String result = new String();
 		for(Move move: moveList) {
-			result += move.toString() + "\n";
+			result += move.getMoveType().toString() + " ";
+			if(move.getMoveType() == MoveType.TRAVEL) {
+				result += GuiBase.getFormat().format(move.getDistanceTraveled());
+			} else if(move.getMoveType() == MoveType.ROTATE) {
+				result += GuiBase.getFormat().format(move.getAngleTurned());
+			} else if(move.getMoveType() == MoveType.ARC) {
+				result += GuiBase.getFormat().format(move.getArcRadius());
+			}
+			result += "\n";
 		}
 		return result;
 	}

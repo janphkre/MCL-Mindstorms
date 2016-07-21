@@ -50,10 +50,11 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private static final int LIGHT_CUTOFF = 40;
 	private static final int ROTATION_START_ANGLE = 5;
 	
-	private static  Random RAND = new Random();
+	private static Random RAND = new Random();
 	
 	private boolean running = false;
 	private DifferentialPilot pilot;
+	private RangeFinder sonic;
 	private RangeScanner scanner;
 	private ColorHTSensor color;
 	private LightSensor light;
@@ -82,7 +83,7 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		pilot = new DifferentialPilot(WHEEL_DIAMETER,TRACK_WIDTH,LEFT_MOTOR,RIGHT_MOTOR,false);
 		pilot.setRotateSpeed(ROTATE_SPEED);
 		pilot.setTravelSpeed(TRAVEL_SPEED);
-		RangeFinder sonic = new UltrasonicSensor(ULTRASONIC_PORT);
+		sonic = new UltrasonicSensor(ULTRASONIC_PORT);
 		scanner = new RotatingRangeScanner(HEAD_MOTOR, sonic, HEAD_GEAR_RATIO);
 		color = new ColorHTSensor(COLOR_PORT);
 		light = new LightSensor(LIGHT_PORT);
@@ -148,8 +149,15 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * @throws IOException
 	 */
 	private void performRandomMove() throws IOException {
-		final float targetdist = (float) (minDistance + RAND.nextGaussian() * (maxDistance - minDistance));
-		
+		final float randomGauss = (float) RAND.nextGaussian();
+		System.out.println(randomGauss);
+		final float targetdist = (minDistance + randomGauss * (maxDistance - minDistance));
+		System.out.println(targetdist);
+		final float randomAngle = 360 * RAND.nextFloat();
+		final float randomCorrectionAngle = ROTATION_START_ANGLE * (RAND.nextBoolean() ? 3 : -3);
+		pilot.rotate(randomAngle);
+		while(sonic.getRange() <= minDistance) pilot.rotate(randomCorrectionAngle);
+		pilot.stop();
 		pilot.forward();
         while(pilot.getMovement().getDistanceTraveled() < targetdist && running) Thread.yield();
         pilot.stop();
