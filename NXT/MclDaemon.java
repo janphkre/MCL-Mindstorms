@@ -33,8 +33,7 @@ import lejos.robotics.navigation.MoveProvider;
  * @author Andreas Walscheid
  *
  */
-public class MclDaemon implements Runnable, ButtonListener, MoveListener {
-	
+public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
 	private static final RegulatedMotor HEAD_MOTOR = Motor.C;
 	private static final RegulatedMotor LEFT_MOTOR = Motor.A;
@@ -42,7 +41,6 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private static final SensorPort ULTRASONIC_PORT = SensorPort.S4;
 	private static final SensorPort COLOR_PORT = SensorPort.S3;
 	private static final SensorPort LIGHT_PORT = SensorPort.S2;
-	
 	private static final int HEAD_GEAR_RATIO = 1;
 	private static final double WHEEL_DIAMETER= 3.4d;
 	private static final double TRACK_WIDTH= 16.1d;
@@ -52,7 +50,8 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private static final int LIGHT_CUTOFF = 40;
 	private static final int ROTATION_START_ANGLE = 5;
 	
-	private Random rand = new Random();
+	private static  Random RAND = new Random();
+	
 	private boolean running = false;
 	private DifferentialPilot pilot;
 	private RangeScanner scanner;
@@ -118,7 +117,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * @throws IOException
 	 */
 	private void performLineMove() throws IOException {
-		final float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
+		final float targetdist = (float) (minDistance + RAND.nextGaussian() * (maxDistance - minDistance));
 		float delta = 0f;
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
@@ -149,7 +148,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * @throws IOException
 	 */
 	private void performRandomMove() throws IOException {
-		final float targetdist = (float) (minDistance + rand.nextGaussian() * (maxDistance - minDistance));
+		final float targetdist = (float) (minDistance + RAND.nextGaussian() * (maxDistance - minDistance));
 		
 		pilot.forward();
         while(pilot.getMovement().getDistanceTraveled() < targetdist && running) Thread.yield();
@@ -159,6 +158,7 @@ public class MclDaemon implements Runnable, ButtonListener, MoveListener {
 			out.write(Message.MOVE_END.ordinal());
 			out.flush();
 		}
+        
 	}
 	
 	private void readRanges() throws IOException {

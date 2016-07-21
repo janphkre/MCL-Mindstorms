@@ -15,15 +15,12 @@ import bot.Connector;
  * @author Andreas Walscheid
  *
  */
-public class NXTRobotGui implements IRobotGui {
-
+public final class NXTRobotGui implements IRobotGui {
 	private static final String ROBOT_NAME_KEY = "ROBOT_NAME";
 	private static final String ROBOT_PROGRAM_KEY = "ROBOT_PROGRAM";
 	private static final String ROBOT_FRAME_TITLE = "NXT Connector";
 	private static final Object[] BUTTONS = {"Connect", "Abort"};
 	
-	private String robotName;
-	private String program;
 	private Connector connector;
 	private JTextField robotNameField = new JTextField();
 	private JTextField programField = new JTextField();
@@ -39,13 +36,9 @@ public class NXTRobotGui implements IRobotGui {
 	
 	@Override
 	public boolean initializeRobot() {
-		robotNameField.setText(robotName);
-		programField.setText(program);
 		final int result = JOptionPane.showOptionDialog(null, data, ROBOT_FRAME_TITLE, JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, BUTTONS, BUTTONS[0]);
         if(result == 0) {
-        	robotName = robotNameField.getText();
-        	program = programField.getText();
-        	connector.connect(robotName, program);
+        	connector.connect(robotNameField.getText(), programField.getText());
         	return connector.isConnected();
         }
 		return false;
@@ -64,13 +57,13 @@ public class NXTRobotGui implements IRobotGui {
 
 	@Override
 	public void loadSettings(Settings settingsGui) {
-		robotName = settingsGui.getSetting(ROBOT_NAME_KEY);
-		program = settingsGui.getSetting(ROBOT_PROGRAM_KEY);
+		robotNameField.setText(settingsGui.getSetting(ROBOT_NAME_KEY));
+		programField.setText(settingsGui.getSetting(ROBOT_PROGRAM_KEY));
 	}
 
 	@Override
 	public void saveSettings(Settings settingsGui) {
-		settingsGui.setSetting(ROBOT_NAME_KEY, robotName);
-		settingsGui.setSetting(ROBOT_PROGRAM_KEY, program);
+		settingsGui.setSetting(ROBOT_NAME_KEY, robotNameField.getText());
+		settingsGui.setSetting(ROBOT_PROGRAM_KEY, programField.getText());
 	}
 }

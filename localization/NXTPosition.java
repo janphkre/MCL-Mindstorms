@@ -8,7 +8,7 @@ import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
 import lejos.robotics.navigation.Pose;
 
-public class NXTPosition implements IPose2D<NXTPosition,NXTMove> {
+public final class NXTPosition implements IPose2D<NXTPosition,NXTMove> {
 	
 	private Pose pose;
 

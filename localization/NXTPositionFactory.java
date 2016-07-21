@@ -5,7 +5,7 @@ import aima.core.util.Util;
 import aima.core.util.datastructure.Pair;
 import aima.core.util.math.geom.shapes.Point2D;
 
-public class NXTPositionFactory implements IPoseFactory<NXTPosition,NXTMove> {
+public final class NXTPositionFactory implements IPoseFactory<NXTPosition,NXTMove> {
 
 	private static class AnglePair extends Pair<Double,Double>{
 

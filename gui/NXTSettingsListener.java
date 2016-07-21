@@ -16,8 +16,7 @@ import localization.NXTRangeReading;
  * @author Andreas Walscheid
  *
  */
-public class NXTSettingsListener extends AbstractSettingsListener {
-
+public final class NXTSettingsListener extends AbstractSettingsListener {
 	public static final String MIN_MOVE_DISTANCE_KEY = "MIN_MOVE_DISTANCE";
 	public static final String MAX_MOVE_DISTANCE_KEY = "MAX_MOVE_DISTANCE";
 	public static final String MOVE_ROTATION_NOISE_KEY = "MOVE_ROTATION_NOISE";

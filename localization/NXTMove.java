@@ -8,7 +8,7 @@ import lejos.robotics.navigation.Move.MoveType;
 import aima.core.robotics.datatypes.IMclMove;
 import aima.core.util.Util;
 
-public class NXTMove implements IMclMove<NXTMove> {
+public final class NXTMove implements IMclMove<NXTMove> {
 	
 	private static float ROTATION_NOISE = 2.0f;//maximum percentage
 	private static float MOVEMENT_NOISE = 2.0f;//maximum percentage

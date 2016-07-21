@@ -4,7 +4,7 @@ import java.io.File;
 
 import aima.core.robotics.impl.MonteCarloLocalization;
 import aima.core.robotics.impl.datatypes.Angle;
-import aima.core.robotics.impl.datatypes.RangeReading;
+import aima.core.robotics.impl.datatypes.AbstractRangeReading;
 import aima.core.robotics.impl.map.MclCartesianPlot2D;
 import aima.core.util.math.geom.SVGGroupParser;
 import aima.gui.applications.robotics.GenericMonteCarloLocalization2DApp;
@@ -25,7 +25,7 @@ import localization.NXTRangeReadingFactory;
  * @author Andreas Walscheid
  *
  */
-public class NXTApp extends MonteCarloLocalizationApp  {
+public final class NXTApp extends MonteCarloLocalizationApp  {
 
 	/**
 	 * Starts the application.
@@ -53,10 +53,10 @@ public class NXTApp extends MonteCarloLocalizationApp  {
 		AnglePanel angles = new AnglePanel();
 		settingsGui.registerSpecialSetting(RANGE_READING_ANGLES_KEY, angles);
 		
-		MclCartesianPlot2D<NXTPosition, NXTMove, RangeReading> map = new MclCartesianPlot2D<NXTPosition,NXTMove,RangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory());
+		MclCartesianPlot2D<NXTPosition, NXTMove, AbstractRangeReading> map = new MclCartesianPlot2D<NXTPosition,NXTMove,AbstractRangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory());
 		Connector robot = new Connector(angles.getAngles());
 		robotGui = new NXTRobotGui(robot);
-		MonteCarloLocalization<NXTPosition,Angle,NXTMove,RangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, RangeReading>(map, robot);
+		MonteCarloLocalization<NXTPosition,Angle,NXTMove,AbstractRangeReading> mcl = new MonteCarloLocalization<NXTPosition, Angle, NXTMove, AbstractRangeReading>(map, robot);
 		app = new GenericMonteCarloLocalization2DApp<NXTPosition,NXTMove,NXTRangeReading>(mcl, map, robot, robotGui, settingsGui);
 		
 		angles.setChangeListener(robot);

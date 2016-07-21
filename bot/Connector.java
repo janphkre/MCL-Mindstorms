@@ -15,7 +15,7 @@ import localization.NXTMove;
 import localization.NXTRangeReading;
 import aima.core.robotics.IMclRobot;
 import aima.core.robotics.impl.datatypes.Angle;
-import aima.core.robotics.impl.datatypes.RangeReading;
+import aima.core.robotics.impl.datatypes.AbstractRangeReading;
 import aima.gui.applications.robotics.components.AnglePanel.ChangeListener;
 import aima.gui.applications.robotics.util.GuiBase;
 
@@ -29,7 +29,7 @@ import aima.gui.applications.robotics.util.GuiBase;
  * @author Andreas Walscheid
  *
  */
-public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeReading>, Runnable {
+public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,AbstractRangeReading>, Runnable {
 	
 	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
 	public static final double MAX_RANGE_READING = 255.0d;//cm
@@ -43,7 +43,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	private DataInputStream in; //only used in the second thread. No synchronization!
 	private DataOutputStream out; //synchronized, just to be sure between GUI and MCL/Core!
 	private Thread connectionThread;
-	private SynchronousQueue<RangeReading[]> rangeQueue;
+	private SynchronousQueue<AbstractRangeReading[]> rangeQueue;
 	private SynchronousQueue<NXTMove> moveQueue;
 	private float minDistance;
 	private float maxDistance;
@@ -54,7 +54,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	 */
 	public Connector(Angle[] rangeReadingAngles) {
 		this.rangeReadingAngles = rangeReadingAngles;
-		this.rangeQueue = new SynchronousQueue<RangeReading[]>();
+		this.rangeQueue = new SynchronousQueue<AbstractRangeReading[]>();
 		this.moveQueue = new SynchronousQueue<NXTMove>();
 	}
 	
@@ -225,7 +225,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	}
 	
 	@Override
-	public RangeReading[] getRangeReadings() {
+	public AbstractRangeReading[] getRangeReadings() {
 		if(!connected) return null;
 		synchronized(out) {
 			try {
@@ -245,7 +245,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 	}
 
 	@Override
-	public float calculateWeight(RangeReading robotRange, RangeReading mapRange) {
+	public float calculateWeight(AbstractRangeReading robotRange, AbstractRangeReading mapRange) {
 		if((robotRange.getValue() < 0 || Double.isInfinite(robotRange.getValue())) && (mapRange.getValue() < 0  || Double.isInfinite(mapRange.getValue()))) return 1;
 		final double robotValue;
 		if(Double.isInfinite(robotRange.getValue()) || robotRange.getValue() > MAX_RELIABLE_RANGE_READING) robotValue = MAX_RELIABLE_RANGE_READING;
@@ -289,7 +289,7 @@ public class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,RangeR
 				case RANGES:
 					RangeReadings rangeReadings = new RangeReadings(rangeReadingAngles.length);
 					rangeReadings.loadObject(in);
-					RangeReading[] ranges = new RangeReading[rangeReadingAngles.length];
+					AbstractRangeReading[] ranges = new AbstractRangeReading[rangeReadingAngles.length];
 					for(int i=0;i < rangeReadingAngles.length;i++) {
 						ranges[i] = new NXTRangeReading(rangeReadings.getRange(i),rangeReadingAngles[i]);
 					}
