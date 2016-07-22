@@ -16,7 +16,9 @@ import localization.NXTRangeReading;
  * @author Andreas Walscheid
  *
  */
+@SuppressWarnings("javadoc")
 public final class NXTSettingsListener extends AbstractSettingsListener {
+	
 	public static final String MIN_MOVE_DISTANCE_KEY = "MIN_MOVE_DISTANCE";
 	public static final String MAX_MOVE_DISTANCE_KEY = "MAX_MOVE_DISTANCE";
 	public static final String MOVE_ROTATION_NOISE_KEY = "MOVE_ROTATION_NOISE";
@@ -48,7 +50,7 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		settingsGui.registerSetting(MIN_WEIGHT_KEY, "Min. particle weight", "0.0");
 		
 		settingsGui.registerSetting(MAX_DISTANCE_KEY, "Max. particle distance", "15.0");
-		settingsGui.registerSetting(MOVE_ROTATION_NOISE_KEY, "Move rotation noise (rad)", "0.3647");
+		settingsGui.registerSetting(MOVE_ROTATION_NOISE_KEY, "Move rotation noise (deg)", "20");
 		settingsGui.registerSetting(MOVE_DISTANCE_NOISE_KEY, "Move distance noise", "20.7188");
 		settingsGui.registerSetting(RANGE_READING_NOISE_KEY, "Range reading noise", "0.4486");
 		settingsGui.registerSetting(MIN_MOVE_DISTANCE_KEY, "Min. move distance", "10.0");

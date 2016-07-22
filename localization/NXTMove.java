@@ -9,25 +9,49 @@ import aima.core.robotics.datatypes.IMclMove;
 import aima.core.util.Util;
 import aima.gui.applications.robotics.util.GuiBase;
 
+/**
+ * This class implements {@link IMclMove} for the NXT environment. Basically it is a list of {@link Move} that were performed by the NXT.
+ * 
+ * @author Arno von Borries
+ * @author Jan Phillip Kretzschmar
+ * @author Andreas Walscheid
+ * 
+ */
 public final class NXTMove implements IMclMove<NXTMove> {
 	
-	private static float ROTATION_NOISE = 2.0f;//maximum percentage
-	private static float MOVEMENT_NOISE = 2.0f;//maximum percentage
+	private static float ROTATION_NOISE;//maximum percentage
+	private static float MOVEMENT_NOISE;//maximum percentage
 	
+	private LinkedList<Move> moveList = new LinkedList<Move>();
+	
+	/**
+	 * Sets the move noise model for the rotation.
+	 * @param value the radiant value of the noise.
+	 */
 	public static void setRotationNoise(double value) {
 		ROTATION_NOISE = (float) value;
 	}
 	
+	/**
+	 * Sets the move noise model for the distance.
+	 * @param value the absolute value of the noise.
+	 */
 	public static void setMovementNoise(double value) {
 		MOVEMENT_NOISE = (float) value;
 	}
 	
-	private LinkedList<Move> moveList = new LinkedList<Move>();
-	
+	/**
+	 * Adds a {@link Move} at the end of the list of moves.
+	 * @param move the move to be added.
+	 */
 	public void add(Move move) {
 		moveList.add(move);
 	}
 	
+	/**
+	 * Returns an {@link Iterator} over the list of stored moves.
+	 * @return an iterator.
+	 */
 	public Iterator<Move> getMoves() {
 		return moveList.iterator();
 	}
@@ -55,7 +79,6 @@ public final class NXTMove implements IMclMove<NXTMove> {
 				moveNew = new Move(MoveType.STOP,0.0f,0.0f,false);
 			}
 			result.add(moveNew);
-			
 		}
 		return result;
 	}

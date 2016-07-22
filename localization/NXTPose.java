@@ -8,15 +8,35 @@ import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
 import lejos.robotics.navigation.Pose;
 
-public final class NXTPosition implements IPose2D<NXTPosition,NXTMove> {
+/**
+ * Implementation of {@link IPose2D} for {@link NXTMove}.<br/>
+ * This class may be used in the context of the NXT environment. 
+ * 
+ * @author Arno von Borries
+ * @author Jan Phillip Kretzschmar
+ * @author Andreas Walscheid
+ * 
+ */
+public final class NXTPose implements IPose2D<NXTPose,NXTMove> {
 	
 	private Pose pose;
 
-	public NXTPosition(float x, float y, float heading) {
+	/**
+	 * @param x the X coordinate of the pose.
+	 * @param y the Y coordinate of the pose.
+	 * @param heading the heading of the pose in radiant.
+	 */
+	public NXTPose(float x, float y, float heading) {
 		pose = new Pose(x, y, (float) Math.toDegrees(heading));
 	}
 	
-	public NXTPosition(float x,float y, float heading, boolean isDegrees) {
+	/**
+	 * @param x the X coordinate of the pose.
+	 * @param y the Y coordinate of the pose.
+	 * @param heading the heading of the pose in radiant or degrees.
+	 * @param isDegrees true if the heading is in degrees.
+	 */
+	public NXTPose(float x, float y, float heading, boolean isDegrees) {
 		if(isDegrees) {
 			pose = new Pose(x, y, heading);
 		} else {
@@ -25,8 +45,8 @@ public final class NXTPosition implements IPose2D<NXTPosition,NXTMove> {
 	}
 	
 	@Override
-	public NXTPosition applyMovement(NXTMove moves) {
-		NXTPosition result = clone();
+	public NXTPose applyMovement(NXTMove moves) {
+		NXTPose result = clone();
 		Iterator<Move> iterator = moves.getMoves();
 		while(iterator.hasNext()) {
 			Move move = iterator.next();
@@ -38,13 +58,13 @@ public final class NXTPosition implements IPose2D<NXTPosition,NXTMove> {
 	}
 
 	@Override
-	public NXTPosition addAngle(Angle angle) {
-		return new NXTPosition(pose.getX(), pose.getY(), pose.getHeading() + (float) Math.toDegrees(angle.getValue()),true);
+	public NXTPose addAngle(Angle angle) {
+		return new NXTPose(pose.getX(), pose.getY(), pose.getHeading() + (float) angle.getDegreeValue(),true);
 	}
 	
 	@Override
-	public NXTPosition clone() {
-		return new NXTPosition(pose.getX(), pose.getY(), pose.getHeading(),true);
+	public NXTPose clone() {
+		return new NXTPose(pose.getX(), pose.getY(), pose.getHeading(),true);
 	}
 
 	@Override
@@ -63,7 +83,7 @@ public final class NXTPosition implements IPose2D<NXTPosition,NXTMove> {
 	}
 
 	@Override
-	public double distanceTo(NXTPosition position) {
+	public double distanceTo(NXTPose position) {
 		final double vectorX = pose.getX() - position.getX();
 		final double vectorY = pose.getY() - position.getY();
 		return Math.sqrt(vectorX*vectorX + vectorY*vectorY);

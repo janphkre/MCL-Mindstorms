@@ -30,7 +30,13 @@ import aima.gui.applications.robotics.util.GuiBase;
  *
  */
 public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,AbstractRangeReading>, Runnable {
+	/**
+	 * This is the distance that the ultrasonic sensor of the NXT can reliable measure. Any range reading above this value should be treated as infinity. 
+	 */
 	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
+	/**
+	 * This is the distance that the ultrasonic sensor will return as maximum
+	 */
 	public static final double MAX_RANGE_READING = 255.0d;//cm
 	
 	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
