@@ -71,8 +71,8 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	}
 	
 	@Override
-	public void notify(String key, String value) {
-		super.notify(key, value);
+	public void notifySetting(String key, String value) {
+		super.notifySetting(key, value);
 		final double valueNumber = Double.parseDouble(value);
 		if(key.equals(MOVE_ROTATION_NOISE_KEY)) {
 			NXTMove.setRotationNoise(valueNumber);
