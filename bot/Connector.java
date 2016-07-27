@@ -102,8 +102,6 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	 */
 	public void connect(String name, String program) {
 		connection = new NXTConnector();
-		
-		connection = new NXTConnector();
 		if(!connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.LCP)) {
 			GuiBase.showMessageBox("Failed to connect to the NXT.");
 			connected = false;
@@ -289,7 +287,10 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		NXTMove currentMove = new NXTMove();
 		while(connected) {
 			try {
-				Message message = Message.values()[in.read()];
+				final int input = in.read();
+				if(input < 0) break;
+				if(input >= Message.values().length) continue;
+				Message message = Message.values()[input];
 				switch(message) {
 				case RANGES:
 					RangeReadings rangeReadings = new RangeReadings(rangeReadingAngles.length);

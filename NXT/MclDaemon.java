@@ -46,6 +46,7 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private static final double TRACK_WIDTH= 16.1d;
 	private static final double ROTATE_SPEED = 100d;
 	private static final double TRAVEL_SPEED = 50d;
+	private static final float SAFE_SPACE = 25f;
 	private static final int COLOR_CUTOFF = 5;
 	private static final int LIGHT_CUTOFF = 40;
 	private static final int ROTATION_START_ANGLE = 5;
@@ -118,7 +119,7 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * @throws IOException
 	 */
 	private void performLineMove() throws IOException {
-		final float targetdist = (float) (minDistance + RAND.nextGaussian() * (maxDistance - minDistance));
+		final float targetdist = (float) (minDistance + RAND.nextFloat() * (maxDistance - minDistance));
 		float delta = 0f;
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
@@ -149,14 +150,11 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * @throws IOException
 	 */
 	private void performRandomMove() throws IOException {
-		final float randomGauss = (float) RAND.nextGaussian();
-		System.out.println(randomGauss);
-		final float targetdist = (minDistance + randomGauss * (maxDistance - minDistance));
-		System.out.println(targetdist);
+		final float targetdist = (minDistance + RAND.nextFloat() * (maxDistance - minDistance));
 		final float randomAngle = 360 * RAND.nextFloat();
 		final float randomCorrectionAngle = ROTATION_START_ANGLE * (RAND.nextBoolean() ? 3 : -3);
 		pilot.rotate(randomAngle);
-		while(sonic.getRange() <= minDistance) pilot.rotate(randomCorrectionAngle);
+		while(sonic.getRange() <= SAFE_SPACE) pilot.rotate(randomCorrectionAngle);
 		pilot.stop();
 		pilot.forward();
         while(pilot.getMovement().getDistanceTraveled() < targetdist && running) Thread.yield();
@@ -193,7 +191,10 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
     	Button.ESCAPE.addButtonListener(this);
     	while(running) {
 			try {
-				final Message message = Message.values()[in.read()];
+				final int input = in.read();
+				if(input < 0) break;
+				if(input >= Message.values().length) continue;
+				final Message message = Message.values()[input];
 				switch(message) {
 				case GET_RANDOM_MOVE:
 					System.out.println("RANDOM");
@@ -224,7 +225,7 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 				}
 			} catch (IOException e) {
 				exception();
-			}
+    		}
 			System.gc();
 		}
 	}

@@ -87,7 +87,7 @@ public final class NXTMove implements IMclMove<NXTMove> {
 	public String toString() {
 		String result = new String();
 		for(Move move: moveList) {
-			result += move.getMoveType().toString() + " ";
+			result += move.getMoveType().toString() + ":";
 			if(move.getMoveType() == MoveType.TRAVEL) {
 				result += GuiBase.getFormat().format(move.getDistanceTraveled());
 			} else if(move.getMoveType() == MoveType.ROTATE) {
@@ -95,7 +95,7 @@ public final class NXTMove implements IMclMove<NXTMove> {
 			} else if(move.getMoveType() == MoveType.ARC) {
 				result += GuiBase.getFormat().format(move.getArcRadius());
 			}
-			result += "\n";
+			result += "<BR>";
 		}
 		return result;
 	}
