@@ -5,6 +5,7 @@ import javax.swing.JTextField;
 
 import aima.gui.applications.robotics.components.IRobotGui;
 import aima.gui.applications.robotics.components.Settings;
+import aima.gui.applications.robotics.util.GuiBase;
 import bot.Connector;
 
 /**
@@ -16,6 +17,7 @@ import bot.Connector;
  *
  */
 public final class NXTRobotGui implements IRobotGui {
+	
 	private static final String ROBOT_NAME_KEY = "ROBOT_NAME";
 	private static final String ROBOT_PROGRAM_KEY = "ROBOT_PROGRAM";
 	private static final String ROBOT_FRAME_TITLE = "NXT Connector";
@@ -25,7 +27,6 @@ public final class NXTRobotGui implements IRobotGui {
 	private JTextField robotNameField = new JTextField();
 	private JTextField programField = new JTextField();
 	private Object[] data = {"Robot name:", robotNameField,"Program:", programField};
-	
 	
 	/**
 	 * @param connector the NXT robot to be managed.
@@ -49,6 +50,11 @@ public final class NXTRobotGui implements IRobotGui {
 		connector.close();
 	}
 
+	@Override
+	public void notifyInitialize() {
+		GuiBase.showMessageBox("You may want to connect with the robot first.");
+	}
+	
 	@Override
 	public String getButtonString() {
 		if(connector.isConnected()) return "Reconnect Robot";

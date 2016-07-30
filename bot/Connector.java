@@ -101,6 +101,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	 * @param program the name of the MCLDaemon program on the NXT.
 	 */
 	public void connect(String name, String program) {
+		GuiBase.showMessageBox("Connecting...",false);
 		connection = new NXTConnector();
 		if(!connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.LCP)) {
 			GuiBase.showMessageBox("Failed to connect to the NXT.");
@@ -162,6 +163,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
     	connectionThread = new Thread(this);
     	connectionThread.setDaemon(true);
     	connectionThread.start();
+    	GuiBase.hideMessageBox();
 	}
 	
 	private void sendAngles() throws IOException {
