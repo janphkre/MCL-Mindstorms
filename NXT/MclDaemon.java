@@ -34,22 +34,17 @@ import lejos.robotics.navigation.MoveProvider;
  *
  */
 public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
-	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
+	
+	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
 	private static final RegulatedMotor HEAD_MOTOR = Motor.C;
-	private static final RegulatedMotor LEFT_MOTOR = Motor.A;
-	private static final RegulatedMotor RIGHT_MOTOR = Motor.B;
-	private static final SensorPort ULTRASONIC_PORT = SensorPort.S4;
+	private static final RegulatedMotor LEFT_MOTOR = Motor.B;
+	private static final RegulatedMotor RIGHT_MOTOR = Motor.A;
+	private static final SensorPort ULTRASONIC_PORT = SensorPort.S1;
 	private static final SensorPort COLOR_PORT = SensorPort.S3;
-	private static final SensorPort LIGHT_PORT = SensorPort.S2;
-	private static final int HEAD_GEAR_RATIO = 1;
+	private static final SensorPort LIGHT_PORT = SensorPort.S4;
+	private static final int HEAD_GEAR_RATIO = -1;
 	private static final double WHEEL_DIAMETER= 3.4d;
-	private static final double TRACK_WIDTH= 16.1d;
-	private static final double ROTATE_SPEED = 100d;
-	private static final double TRAVEL_SPEED = 50d;
-	private static final float SAFE_SPACE = 25f;
-	private static final int COLOR_CUTOFF = 5;
-	private static final int LIGHT_CUTOFF = 40;
-	private static final int ROTATION_START_ANGLE = 5;
+	private static final double TRACK_WIDTH= 18.1d;
 	
 	private static Random RAND = new Random();
 	
@@ -63,11 +58,18 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private DataInputStream in;
 	/**
 	 * The output should be synchronized as it is used by the MoveListener too. Use:<br/>
-	 * {code synchronized(out) {...}}
+	 * <code>synchronized(out) {...}</code>
 	 */
 	private DataOutputStream out;
 	private float minDistance;
 	private float maxDistance;
+	private double rotateSpeed;
+	private double travelSpeed;
+	private float safeSpace;
+	private int colorCutoff;
+	private int lightCutoff;
+	private int rotationStartAngle;
+	private boolean verbose = false;
 	
 	/**
 	 * Creates a new instance of the MclDaemon and runs it.
@@ -81,9 +83,9 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * Initializes the daemon and awaits a bluetooth connection via {@code NXTConnection.PACKET}.
 	 */
 	public MclDaemon() {
-		pilot = new DifferentialPilot(WHEEL_DIAMETER,TRACK_WIDTH,LEFT_MOTOR,RIGHT_MOTOR,false);
-		pilot.setRotateSpeed(ROTATE_SPEED);
-		pilot.setTravelSpeed(TRAVEL_SPEED);
+		pilot = new DifferentialPilot(WHEEL_DIAMETER,TRACK_WIDTH,LEFT_MOTOR,RIGHT_MOTOR,true);
+		pilot.setRotateSpeed(rotateSpeed);
+		pilot.setTravelSpeed(travelSpeed);
 		sonic = new UltrasonicSensor(ULTRASONIC_PORT);
 		scanner = new RotatingRangeScanner(HEAD_MOTOR, sonic, HEAD_GEAR_RATIO);
 		color = new ColorHTSensor(COLOR_PORT);
@@ -106,7 +108,7 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		pilot.stop();
 		conn.close();
 		Sound.beepSequence();
-		System.exit(0);
+		System.getRuntime().halt(0);
 	}
 	
 	private void exception() {
@@ -123,13 +125,13 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		float delta = 0f;
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
-			if(color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) {
-        		int i = ROTATION_START_ANGLE;
-				while ((color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) && running) {
+			if(color.getColorID() <= colorCutoff || light.readValue() <= lightCutoff) {
+        		int i = rotationStartAngle;
+				while ((color.getColorID() <= colorCutoff || light.readValue() <= lightCutoff) && running) {
 					delta += pilot.getMovement().getDistanceTraveled();
 					pilot.stop();
 					pilot.rotate(i,true);
-					while ((color.getColorID() <= COLOR_CUTOFF || light.readValue() <= LIGHT_CUTOFF) && pilot.isMoving() && running) Thread.yield();
+					while ((color.getColorID() <= colorCutoff || light.readValue() <= lightCutoff) && pilot.isMoving() && running) Thread.yield();
 					pilot.stop();
 					i *= -2;
 					i = i % 360;
@@ -138,7 +140,7 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
         	}
         }
         pilot.stop();
-        while(pilot.isMoving()) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
+        while(pilot.isMoving()) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message!
         synchronized(out) {
 			out.write(Message.MOVE_END.ordinal());
 			out.flush();
@@ -150,16 +152,35 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * @throws IOException
 	 */
 	private void performRandomMove() throws IOException {
-		final float targetdist = (minDistance + RAND.nextFloat() * (maxDistance - minDistance));
-		final float randomAngle = 360 * RAND.nextFloat();
-		final float randomCorrectionAngle = ROTATION_START_ANGLE * (RAND.nextBoolean() ? 3 : -3);
+		final float targetdist = (float) (minDistance + RAND.nextDouble() * (maxDistance - minDistance));
+		final float randomAngle = (float) (360.0d * RAND.nextDouble() - 180.0d);
 		pilot.rotate(randomAngle);
-		while(sonic.getRange() <= SAFE_SPACE) pilot.rotate(randomCorrectionAngle);
+		for(int i=0; i < 10; i++) {
+			pilot.stop();
+			while(pilot.isMoving()) Thread.yield();
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			float forwardRange;
+		    try {
+		    	forwardRange = sonic.getRange();
+		    } catch (Exception e) {
+		    	forwardRange = 0;
+		    }
+		    if (forwardRange < 0 || targetdist + safeSpace < forwardRange) {
+		    	pilot.travel(targetdist);
+		    	break;
+		    } else if(safeSpace < forwardRange) {
+		    	pilot.travel(forwardRange - safeSpace);
+		    	break;
+		    } else {
+		    	pilot.rotate(rotationStartAngle);
+		    }
+		}
 		pilot.stop();
-		pilot.forward();
-        while(pilot.getMovement().getDistanceTraveled() < targetdist && running) Thread.yield();
-        pilot.stop();
-        while(pilot.isMoving()) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message! TODO: Any better ideas/implementation of a "semaphore" for synchronization in LeJOS Runtime?
+		while(pilot.isMoving()) Thread.yield(); //Make sure, that all MOVES have been sent before the MOVE_END message!
         synchronized(out) {
 			out.write(Message.MOVE_END.ordinal());
 			out.flush();
@@ -197,29 +218,55 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 				final Message message = Message.values()[input];
 				switch(message) {
 				case GET_RANDOM_MOVE:
-					System.out.println("RANDOM");
+					if(verbose) System.out.println("RANDOM");
 					performRandomMove();
 					break;
 				case GET_LINE_MOVE:
-					System.out.println("LINE");
+					if(verbose) System.out.println("LINE");
 					performLineMove();
 					break;
 				case GET_RANGES:
-					System.out.println("RANGES");
+					if(verbose) System.out.println("RANGES");
 					readRanges();
 					break;
 				case SET_ANGLES:
-					System.out.println("ANGLES");
+					if(verbose) System.out.println("ANGLES");
 					setAngles();
 					break;
 				case SET_MIN_DISTANCE:
-					System.out.println("MIN_DISTANCE");
+					if(verbose) System.out.println("MIN_DISTANCE");
 					minDistance = in.readFloat();
 					break;
 				case SET_MAX_DISTANCE:
-					System.out.println("MAX_DISTANCE");
+					if(verbose) System.out.println("MAX_DISTANCE");
 					maxDistance = in.readFloat();
 					break;
+				case SET_COLOR_CUTOFF:
+					if(verbose) System.out.println("COLOR_CUTOFF");
+					colorCutoff = in.readInt();
+					break;
+				case SET_LIGHT_CUTOFF:
+					if(verbose) System.out.println("LIGHT_CUTOFF");
+					lightCutoff = in.readInt();
+					break;
+				case SET_ROTATE_SPEED:
+					if(verbose) System.out.println("ROTATE_SPEED");
+					rotateSpeed = in.readDouble();
+					break;
+				case SET_ROTATION_START_ANGLE:
+					if(verbose) System.out.println("ROTATION_ANGLE");
+					rotationStartAngle = in.readInt();
+					break;
+				case SET_SAFE_SPACE:
+					if(verbose) System.out.println("SAFE_SPACE");
+					safeSpace = in.readFloat();
+					break;
+				case SET_TRAVEL_SPEED:
+					if(verbose) System.out.println("TRAVEL_SPEED");
+					travelSpeed = in.readDouble();
+					break;
+				case SET_VERBOSE:
+					verbose = in.readBoolean();
 				default:
 					System.out.println("MESSAGE:"+message.ordinal()+"?");
 				}
@@ -247,11 +294,11 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	}
 
 	@Override
-	public void buttonPressed(Button b) { }
-
-	@Override
-	public void buttonReleased(Button b) {
+	public void buttonPressed(Button b) {
 		System.out.println("Exit");
 		close();
 	}
+
+	@Override
+	public void buttonReleased(Button b) { }
 }

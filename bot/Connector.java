@@ -14,6 +14,7 @@ import lejos.robotics.navigation.Move;
 import localization.NXTMove;
 import localization.NXTRangeReading;
 import aima.core.robotics.IMclRobot;
+import aima.core.robotics.datatypes.RobotException;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.AbstractRangeReading;
 import aima.gui.applications.robotics.components.AnglePanel.ChangeListener;
@@ -30,6 +31,7 @@ import aima.gui.applications.robotics.util.GuiBase;
  *
  */
 public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,AbstractRangeReading>, Runnable {
+	
 	/**
 	 * This is the distance that the ultrasonic sensor of the NXT can reliable measure. Any range reading above this value should be treated as infinity. 
 	 */
@@ -39,7 +41,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	 */
 	public static final double MAX_RANGE_READING = 255.0d;//cm
 	
-	private static enum Message {SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
+	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
 	
 	private Message moveType = Message.GET_RANDOM_MOVE;
 	private Angle[] rangeReadingAngles;
@@ -52,6 +54,13 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	private SynchronousQueue<NXTMove> moveQueue;
 	private float minDistance;
 	private float maxDistance;
+	private double rotateSpeed;
+	private double travelSpeed;
+	private float safeSpace;
+	private int colorCutoff;
+	private int lightCutoff;
+	private int rotationStartAngle;
+	private boolean verbose;
 	private double badDelta;
 	
 	/**
@@ -145,17 +154,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		out = new DataOutputStream(connection.getOutputStream());
 		connected = true;
 		
-		try{
-			sendAngles();
-			out.write(Message.SET_MIN_DISTANCE.ordinal());
-			out.writeFloat(minDistance);
-			out.flush();
-			out.write(Message.SET_MAX_DISTANCE.ordinal());
-			out.writeFloat(maxDistance);
-			out.flush();
-		} catch (IOException e) {
-			ioException();
-		}
+		sendSettings();
 		
 		if(connectionThread != null) {
 			connectionThread.interrupt();
@@ -166,47 +165,75 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
     	GuiBase.hideMessageBox();
 	}
 	
-	private void sendAngles() throws IOException {
-		out.write(Message.SET_ANGLES.ordinal());
-		out.writeInt(rangeReadingAngles.length);
-		for(Angle angle: rangeReadingAngles) {
-			out.writeFloat((float) Math.toDegrees(angle.getValue()));
-		}
-		out.flush();
+	private void sendSettings() {
+			sendSetting(Message.SET_VERBOSE.ordinal(), verbose);
+			sendAngles();
+			sendSetting(Message.SET_MIN_DISTANCE.ordinal(), minDistance);
+			sendSetting(Message.SET_MAX_DISTANCE.ordinal(), maxDistance);
+			sendSetting(Message.SET_ROTATE_SPEED.ordinal(), rotateSpeed);
+			sendSetting(Message.SET_TRAVEL_SPEED.ordinal(), travelSpeed);
+			sendSetting(Message.SET_SAFE_SPACE.ordinal(), safeSpace);
+			sendSetting(Message.SET_COLOR_CUTOFF.ordinal(), colorCutoff);
+			sendSetting(Message.SET_LIGHT_CUTOFF.ordinal(), lightCutoff);
+			sendSetting(Message.SET_ROTATION_START_ANGLE.ordinal(), rotationStartAngle);
 	}
 	
-	/**
-	 * Sets the minimum move distance and sends it to the robot if one is connected.
-	 * @param distance the distance to be set.
-	 */
-	public void setMinMoveDistance(double distance) {
-		minDistance = (float) distance;
-		if(connected) {
-			try {
-				out.write(Message.SET_MIN_DISTANCE.ordinal());
-				out.writeFloat((float) distance);
-				out.flush();
-			} catch (IOException e) {
-				ioException();
-			}
+	private void sendSetting(int message, float setting) {
+		try {
+			out.write(message);
+			out.writeFloat(setting);
+			out.flush();
+		} catch (IOException e) {
+			ioException();
 		}
 	}
 	
-	/**
-	 * Sets the maximum move distance and sends it to the robot if one is connected.
-	 * @param distance the distance to be set.
-	 */
-	public void setMaxMoveDistance(double distance) {
-		maxDistance = (float) distance;
-		if(connected) {
-			try {
-				out.write(Message.SET_MAX_DISTANCE.ordinal());
-				out.writeFloat((float) distance);
-				out.flush();
-			} catch (IOException e) {
-				ioException();
-			}
+	private void sendSetting(int message, double setting) {
+		try {
+			out.write(message);
+			out.writeDouble(setting);
+			out.flush();
+		} catch (IOException e) {
+			ioException();
 		}
+	}
+	
+	private void sendSetting(int message, int setting) {
+		try {
+			out.write(message);
+			out.writeInt(setting);
+			out.flush();
+		} catch (IOException e) {
+			ioException();
+		}
+	}
+	
+	private void sendSetting(int message, boolean setting) {
+		try {
+			out.write(message);
+			out.writeBoolean(setting);
+			out.flush();
+		} catch (IOException e) {
+			ioException();
+		}
+	}
+	
+	private void sendAngles() {
+		try {
+			out.write(Message.SET_ANGLES.ordinal());
+			out.writeInt(rangeReadingAngles.length);
+			for(Angle angle: rangeReadingAngles) {
+				out.writeFloat((float) Math.toDegrees(angle.getValue()));
+			}
+			out.flush();
+		} catch (IOException e) {
+			ioException();
+		}
+	}
+	
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+		if(connected) sendSetting(Message.SET_VERBOSE.ordinal(), verbose);
 	}
 	
 	/**
@@ -217,20 +244,62 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		badDelta = delta;
 	}
 	
-	@Override
-	public void notify(Angle[] angles) {
-		rangeReadingAngles = angles;
-		if(connected) {
-			try {
-				sendAngles();
-			} catch (IOException e) {
-				ioException();
-			}
-		}
+	/**
+	 * Sets the minimum move distance and sends it to the robot if one is connected.
+	 * @param distance the distance to be set.
+	 */
+	public void setMinMoveDistance(float distance) {
+		maxDistance = distance;
+		if(connected) sendSetting(Message.SET_MIN_DISTANCE.ordinal(), distance);
+	}
+	
+	/**
+	 * Sets the maximum move distance and sends it to the robot if one is connected.
+	 * @param distance the distance to be set.
+	 */
+	public void setMaxMoveDistance(float distance) {
+		maxDistance = distance;
+		if(connected) sendSetting(Message.SET_MAX_DISTANCE.ordinal(), distance);
+	}
+	
+	public void setRotateSpeed(double speed) {
+		rotateSpeed = speed;
+		if(connected) sendSetting(Message.SET_ROTATE_SPEED.ordinal(), speed);
+	}
+	
+	public void setTravelSpeed(double speed) {
+		travelSpeed = speed;
+		if(connected) sendSetting(Message.SET_TRAVEL_SPEED.ordinal(), speed);
+	}
+	
+	public void setClearance(float distance) {
+		safeSpace = distance;
+		if(connected) sendSetting(Message.SET_SAFE_SPACE.ordinal(), distance);
+	}
+	
+	public void setColorCutoff(int cutoff) {
+		colorCutoff = cutoff;
+		if(connected) sendSetting(Message.SET_COLOR_CUTOFF.ordinal(), cutoff);
+	}
+	
+	public void setLightCutoff(int cutoff) {
+		lightCutoff = cutoff;
+		if(connected) sendSetting(Message.SET_LIGHT_CUTOFF.ordinal(), cutoff);
+	}
+	
+	public void setRotationStartAngle(int angle) {
+		rotationStartAngle = angle;
+		if(connected) sendSetting(Message.SET_ROTATION_START_ANGLE.ordinal(), angle);
 	}
 	
 	@Override
-	public AbstractRangeReading[] getRangeReadings() {
+	public void notify(Angle[] angles) {
+		rangeReadingAngles = angles;
+		if(connected)sendAngles();
+	}
+	
+	@Override
+	public AbstractRangeReading[] getRangeReadings() throws RobotException {
 		if(!connected) return null;
 		synchronized(out) {
 			try {
@@ -238,15 +307,18 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 				out.flush();
 			} catch (IOException e) {
 				ioException();
-				return null;
+				throw new RobotException();
 			}
 		}
+		AbstractRangeReading[] result = null;
 		try {
-			return rangeQueue.take();
+			result = rangeQueue.take();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+			throw new RobotException();
 		}
-		return null;
+		if(result.length == 0) throw new RobotException();
+		return result;
 	}
 
 	@Override
@@ -265,7 +337,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 
 	
 	@Override
-	public NXTMove performMove() {
+	public NXTMove performMove() throws RobotException {
 		if(!connected) return null;
 		synchronized(out) {
 			try {
@@ -273,15 +345,18 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 				out.flush();
 			} catch (IOException e) {
 				ioException();
-				return null;
+				throw new RobotException();
 			}
 		}
+		NXTMove result = null;
 		try {
-			return moveQueue.take();
+			result = moveQueue.take();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+			throw new RobotException();
 		}
-		return null;
+		if(result.isEmpty()) throw new RobotException();
+		return result;
 	}
 	
 	@Override
@@ -304,7 +379,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 					rangeQueue.put(ranges);
 					break;
 				case MOVE:
-					//Move is posted after each segment of a move has stopped.
+					//sent after each segment of a move has stopped.
 					Move move = new Move(false, 0, 0);
 					move.loadObject(in);
 					currentMove.add(move);
@@ -318,6 +393,9 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 				}
 			} catch (IOException e) {
 				ioException();
+				moveQueue.offer(new NXTMove());
+				rangeQueue.offer(new AbstractRangeReading[0]);
+				break;
 			} catch (InterruptedException e) {
 				break;
 			}

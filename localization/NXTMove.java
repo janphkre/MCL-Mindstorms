@@ -56,6 +56,10 @@ public final class NXTMove implements IMclMove<NXTMove> {
 		return moveList.iterator();
 	}
 	
+	public boolean isEmpty() {
+		return moveList.isEmpty();
+	}
+	
 	@Override
 	public NXTMove generateNoise() {
 		NXTMove result = new NXTMove();
