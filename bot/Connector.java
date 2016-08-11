@@ -23,7 +23,7 @@ import aima.gui.applications.robotics.util.GuiBase;
 /**
  * This class establishes and manages the connection to the NXT robot.<br/>
  * Thus it implements {@link IMclRobot} to let the Monte-Carlo-Localization control the robot.
- * Furthermore {@link ChangeListener} is implemented to inform the robot when it should measure the range in different angles.
+ * Furthermore {@link ChangeListener} is implemented to inform the robot when it should measure the range at different angles.
  * 
  * @author Arno von Borries
  * @author Jan Phillip Kretzschmar
@@ -33,17 +33,17 @@ import aima.gui.applications.robotics.util.GuiBase;
 public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,AbstractRangeReading>, Runnable {
 	
 	/**
-	 * This is the distance that the ultrasonic sensor of the NXT can reliable measure. Any range reading above this value should be treated as infinity. 
+	 * The distance that the ultrasonic sensor of the NXT can reliable measure in cm. Any range reading above this value should be treated as infinity. 
 	 */
-	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;//cm
+	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;
 	/**
-	 * This is the distance that the ultrasonic sensor will return as maximum
+	 * The distance that the ultrasonic sensor will return as a maximum in cm.
 	 */
-	public static final double MAX_RANGE_READING = 255.0d;//cm
+	public static final double MAX_RANGE_READING = 255.0d;
 	
-	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
+	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END, FIND_CUTOFFS};
 	
-	private Message moveType = Message.GET_RANDOM_MOVE;
+	private Message moveType = Message.GET_LINE_MOVE;
 	private Angle[] rangeReadingAngles;
 	private boolean connected = false;
 	private NXTConnector connection;
@@ -64,7 +64,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	private double badDelta;
 	
 	/**
-	 * @param rangeReadingAngles the initial angles in which the ranges are read.
+	 * @param rangeReadingAngles the initial angles at which the ranges are read.
 	 */
 	public Connector(Angle[] rangeReadingAngles) {
 		this.rangeReadingAngles = rangeReadingAngles;
@@ -73,7 +73,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	}
 	
 	/**
-	 * Returns the connection status with the robot.
+	 * Returns the status of the connection with the robot.
 	 * @return true if a connection is established with the robot.
 	 */
 	public boolean isConnected() {
@@ -101,13 +101,13 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	 */
 	private void ioException() {
 		close();
-		GuiBase.showMessageBox("IOException! Did the Bot turn off?");
+		GuiBase.showMessageBox("IOException! Did the bot die?");
 	}
 	
 	/**
-	 * Tries to connect to a robot with the given name and start the specified program (which is a {@code MClDaemon} on the NXT.
+	 * Tries to connect to a robot with the given name and starts the specified program (which is a {@code MClDaemon} on the NXT.
 	 * @param name the name of the NXT robot.
-	 * @param program the name of the MCLDaemon program on the NXT.
+	 * @param program the full name of the MCLDaemon program on the NXT.
 	 */
 	public void connect(String name, String program) {
 		GuiBase.showMessageBox("Connecting...",false);
@@ -165,6 +165,9 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
     	GuiBase.hideMessageBox();
 	}
 	
+	/**
+	 * Sends all settings to the NXT.
+	 */
 	private void sendSettings() {
 			sendSetting(Message.SET_VERBOSE.ordinal(), verbose);
 			sendAngles();
@@ -176,8 +179,15 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 			sendSetting(Message.SET_COLOR_CUTOFF.ordinal(), colorCutoff);
 			sendSetting(Message.SET_LIGHT_CUTOFF.ordinal(), lightCutoff);
 			sendSetting(Message.SET_ROTATION_START_ANGLE.ordinal(), rotationStartAngle);
+			
+			findCutoffs();
 	}
 	
+	/**
+	 * Sends a setting to the NXT.
+	 * @param message the message by which the robot recognizes the setting.
+	 * @param setting the value of the setting.
+	 */
 	private void sendSetting(int message, float setting) {
 		try {
 			out.write(message);
@@ -188,6 +198,11 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		}
 	}
 	
+	/**
+	 * Sends a setting to the NXT.
+	 * @param message the message by which the robot recognizes the setting.
+	 * @param setting the value of the setting.
+	 */
 	private void sendSetting(int message, double setting) {
 		try {
 			out.write(message);
@@ -198,6 +213,11 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		}
 	}
 	
+	/**
+	 * Sends a setting to the NXT.
+	 * @param message the message by which the robot recognizes the setting.
+	 * @param setting the value of the setting.
+	 */
 	private void sendSetting(int message, int setting) {
 		try {
 			out.write(message);
@@ -208,6 +228,11 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		}
 	}
 	
+	/**
+	 * Sends a setting to the NXT.
+	 * @param message the message by which the robot recognizes the setting.
+	 * @param setting the value of the setting.
+	 */
 	private void sendSetting(int message, boolean setting) {
 		try {
 			out.write(message);
@@ -218,6 +243,9 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		}
 	}
 	
+	/**
+	 * Sends the angles of the range readings to the robot.
+	 */
 	private void sendAngles() {
 		try {
 			out.write(Message.SET_ANGLES.ordinal());
@@ -231,6 +259,10 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		}
 	}
 	
+	/**
+	 * Sets the robot to verbose mode.
+	 * @param verbose {@code true} if the robot is to be verbose. 
+	 */
 	public void setVerbose(boolean verbose) {
 		this.verbose = verbose;
 		if(connected) sendSetting(Message.SET_VERBOSE.ordinal(), verbose);
@@ -262,34 +294,70 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		if(connected) sendSetting(Message.SET_MAX_DISTANCE.ordinal(), distance);
 	}
 	
+	/**
+	 * Sets the rotate speed and sends it to the robot if one is connected.
+	 * @param speed the rotate speed to be set.
+	 */
 	public void setRotateSpeed(double speed) {
 		rotateSpeed = speed;
 		if(connected) sendSetting(Message.SET_ROTATE_SPEED.ordinal(), speed);
 	}
 	
+	/**
+	 * Sets the travel speed and sends it to the robot if one is connected.
+	 * @param speed the travel speed to be set.
+	 */
 	public void setTravelSpeed(double speed) {
 		travelSpeed = speed;
 		if(connected) sendSetting(Message.SET_TRAVEL_SPEED.ordinal(), speed);
 	}
 	
+	/**
+	 * Sets the clearance to objects while moving forward and sends it to the robot if one is connected.
+	 * @param distance the clearance to be set.
+	 */
 	public void setClearance(float distance) {
 		safeSpace = distance;
 		if(connected) sendSetting(Message.SET_SAFE_SPACE.ordinal(), distance);
 	}
 	
+	/**
+	 * Sets the cutoff value for the color sensor and sends it to the robot if one is connected.
+	 * @param cutoff the cutoff value to be set.
+	 */
 	public void setColorCutoff(int cutoff) {
 		colorCutoff = cutoff;
 		if(connected) sendSetting(Message.SET_COLOR_CUTOFF.ordinal(), cutoff);
 	}
 	
+	/**
+	 * Sets the cutoff value for the light sensor and sends it to the robot if one is connected.
+	 * @param cutoff the cutoff value to be set.
+	 */
 	public void setLightCutoff(int cutoff) {
 		lightCutoff = cutoff;
 		if(connected) sendSetting(Message.SET_LIGHT_CUTOFF.ordinal(), cutoff);
 	}
 	
+	/**
+	 * Sets the angle at which the robot initially rotates to find the line and sends it to the robot if one is connected.
+	 * @param angle the angle to be set.
+	 */
 	public void setRotationStartAngle(int angle) {
 		rotationStartAngle = angle;
 		if(connected) sendSetting(Message.SET_ROTATION_START_ANGLE.ordinal(), angle);
+	}
+	
+	/**
+	 * Makes the robot find cut off values for the color and light sensors.
+	 */
+	public void findCutoffs() {
+		try {
+			out.write(Message.FIND_CUTOFFS.ordinal());
+			out.flush();
+		} catch(IOException e) {
+			ioException();
+		}
 	}
 	
 	@Override
@@ -389,6 +457,8 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 					moveQueue.put(currentMove);
 					currentMove = new NXTMove();
 					break;
+				case FIND_CUTOFFS:
+					System.out.println(in.readInt());
 				default:
 				}
 			} catch (IOException e) {

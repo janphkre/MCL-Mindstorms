@@ -17,5 +17,4 @@ public final class NXTRangeReadingFactory implements IRangeReadingFactory<Abstra
 	public AbstractRangeReading getRangeReading(double value) {
 		return new NXTRangeReading(value);
 	}
-
 }

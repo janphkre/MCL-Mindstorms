@@ -18,7 +18,7 @@ import localization.NXTRangeReading;
 import localization.NXTRangeReadingFactory;
 
 /**
- * Entails {@link MonteCarloLocalizationApp} to be able to use the {@link GenericMonteCarloLocalization2DApp} for the NXT environment. 
+ * Extends {@link MonteCarloLocalizationApp} to be able to use the {@link GenericMonteCarloLocalization2DApp} for the NXT environment. 
  * 
  * @author Arno von Borries
  * @author Jan Phillip Kretzschmar

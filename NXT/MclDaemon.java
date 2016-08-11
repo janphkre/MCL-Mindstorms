@@ -35,17 +35,17 @@ import lejos.robotics.navigation.MoveProvider;
  */
 public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	
-	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END};
-	private static final RegulatedMotor HEAD_MOTOR = Motor.C;
-	private static final RegulatedMotor LEFT_MOTOR = Motor.B;
-	private static final RegulatedMotor RIGHT_MOTOR = Motor.A;
+	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END, FIND_CUTOFFS};
+	private static final RegulatedMotor HEAD_MOTOR = Motor.B;
+	private static final RegulatedMotor LEFT_MOTOR = Motor.A;
+	private static final RegulatedMotor RIGHT_MOTOR = Motor.C;
 	private static final SensorPort ULTRASONIC_PORT = SensorPort.S1;
 	private static final SensorPort COLOR_PORT = SensorPort.S3;
 	private static final SensorPort LIGHT_PORT = SensorPort.S4;
 	private static final int HEAD_GEAR_RATIO = -1;
 	private static final double WHEEL_DIAMETER= 3.4d;
 	private static final double TRACK_WIDTH= 18.1d;
-	
+	private static final int CUTOFF_MEASUREMENTS = 11;
 	private static Random RAND = new Random();
 	
 	private boolean running = false;
@@ -57,14 +57,12 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private NXTConnection conn;
 	private DataInputStream in;
 	/**
-	 * The output should be synchronized as it is used by the MoveListener too. Use:<br/>
+	 * The output should be synchronized as it is used by the {@code MoveListener}, too. Use:<br/>
 	 * <code>synchronized(out) {...}</code>
 	 */
 	private DataOutputStream out;
 	private float minDistance;
 	private float maxDistance;
-	private double rotateSpeed;
-	private double travelSpeed;
 	private float safeSpace;
 	private int colorCutoff;
 	private int lightCutoff;
@@ -83,9 +81,9 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	 * Initializes the daemon and awaits a bluetooth connection via {@code NXTConnection.PACKET}.
 	 */
 	public MclDaemon() {
+		Button.ESCAPE.addButtonListener(this);
+		
 		pilot = new DifferentialPilot(WHEEL_DIAMETER,TRACK_WIDTH,LEFT_MOTOR,RIGHT_MOTOR,true);
-		pilot.setRotateSpeed(rotateSpeed);
-		pilot.setTravelSpeed(travelSpeed);
 		sonic = new UltrasonicSensor(ULTRASONIC_PORT);
 		scanner = new RotatingRangeScanner(HEAD_MOTOR, sonic, HEAD_GEAR_RATIO);
 		color = new ColorHTSensor(COLOR_PORT);
@@ -101,7 +99,7 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	}
 	
 	/**
-	 * 
+	 * Exits the application.
 	 */
 	private void close() {
 		running = false;
@@ -111,17 +109,70 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		System.getRuntime().halt(0);
 	}
 	
+	/**
+	 * Handles an exception.
+	 */
 	private void exception() {
 		System.out.println("IO Exception");
 		close();
 	}
 	
+	private void findCutoffs() {
+		//line values:
+		int colorValue = color.getColorID();
+		int lightValue = light.readValue();
+		pilot.forward();
+		Thread.yield();
+		for(int i=1;i < CUTOFF_MEASUREMENTS;i++) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			colorValue += color.getColorID();
+			lightValue += light.readValue();
+		}
+		pilot.stop();
+		//rotate to get off the line:
+		HEAD_MOTOR.rotate(90*HEAD_GEAR_RATIO);
+		final double firstRange = sonic.getRange();
+		HEAD_MOTOR.rotate(-180*HEAD_GEAR_RATIO);
+		final double secondRange = sonic.getRange();
+		HEAD_MOTOR.rotate(90*HEAD_GEAR_RATIO,true);
+		if(firstRange < 0) pilot.rotate(90);
+		else if(secondRange < 0) pilot.rotate(-90);
+		else if(firstRange > secondRange) pilot.rotate(90);
+		else pilot.rotate(-90);
+		pilot.travel(10.0d);
+		//off line values:
+		colorValue += color.getColorID();
+		lightValue += light.readValue();
+		pilot.forward();
+		Thread.yield();
+		for(int i=1;i < CUTOFF_MEASUREMENTS;i++) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			colorValue += color.getColorID();
+			lightValue += light.readValue();
+		}
+		pilot.stop();
+		//Calculate cutoffs/mean:
+		colorValue /= CUTOFF_MEASUREMENTS * 2;
+		lightValue /= CUTOFF_MEASUREMENTS * 2;
+		colorCutoff = colorValue;
+		lightCutoff = lightValue;
+		while(HEAD_MOTOR.isMoving()) Thread.yield();
+	}
+	
 	/**
-	 * As a move the robot follows a line.
-	 * @throws IOException
+	 *To move, the robot follows a line.
+	 * @throws IOException thrown if the bluetooth connection has been lost.
 	 */
 	private void performLineMove() throws IOException {
-		final float targetdist = (float) (minDistance + RAND.nextFloat() * (maxDistance - minDistance));
+		final float targetdist = (float) (minDistance + RAND.nextDouble() * (maxDistance - minDistance));
 		float delta = 0f;
 		pilot.forward();
         while(delta + pilot.getMovement().getDistanceTraveled() < targetdist && running) {
@@ -148,8 +199,8 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	}
 	
 	/**
-	 * As a move the robot rotates a random angle and goes forward a random distance.
-	 * @throws IOException
+	 * To move, the robot rotates a random angle and goes forward a random distance.
+	 * @throws IOException thrown if the bluetooth connection has been lost.
 	 */
 	private void performRandomMove() throws IOException {
 		final float targetdist = (float) (minDistance + RAND.nextDouble() * (maxDistance - minDistance));
@@ -188,6 +239,10 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
         
 	}
 	
+	/**
+	 * Performs a range reading and returns it via bluetooth.
+	 * @throws IOException thrown if the bluetooth connection has been lost.
+	 */
 	private void readRanges() throws IOException {
 		final RangeReadings ranges = scanner.getRangeValues();
 		synchronized(out) {
@@ -197,6 +252,10 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		}
 	}
 	
+	/**
+	 * Sets the angles for the range reading to values received via bluetooth.
+	 * @throws IOException thrown if the bluetooth connection has been lost.
+	 */
 	private void setAngles() throws IOException {
 		final int count = in.readInt();
 		float[] rangeAngles = new float[count];
@@ -209,7 +268,6 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	@Override
 	public void run() {
 		running = true;
-    	Button.ESCAPE.addButtonListener(this);
     	while(running) {
 			try {
 				final int input = in.read();
@@ -217,13 +275,17 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 				if(input >= Message.values().length) continue;
 				final Message message = Message.values()[input];
 				switch(message) {
-				case GET_RANDOM_MOVE:
-					if(verbose) System.out.println("RANDOM");
-					performRandomMove();
+				case FIND_CUTOFFS:
+					if(verbose) System.out.println("FIND_COLOR");
+					findCutoffs();
 					break;
 				case GET_LINE_MOVE:
 					if(verbose) System.out.println("LINE");
 					performLineMove();
+					break;
+				case GET_RANDOM_MOVE:
+					if(verbose) System.out.println("RANDOM");
+					performRandomMove();
 					break;
 				case GET_RANGES:
 					if(verbose) System.out.println("RANGES");
@@ -251,7 +313,7 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 					break;
 				case SET_ROTATE_SPEED:
 					if(verbose) System.out.println("ROTATE_SPEED");
-					rotateSpeed = in.readDouble();
+					pilot.setRotateSpeed(in.readDouble());
 					break;
 				case SET_ROTATION_START_ANGLE:
 					if(verbose) System.out.println("ROTATION_ANGLE");
@@ -263,10 +325,11 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 					break;
 				case SET_TRAVEL_SPEED:
 					if(verbose) System.out.println("TRAVEL_SPEED");
-					travelSpeed = in.readDouble();
+					pilot.setTravelSpeed(in.readDouble());
 					break;
 				case SET_VERBOSE:
 					verbose = in.readBoolean();
+					break;
 				default:
 					System.out.println("MESSAGE:"+message.ordinal()+"?");
 				}

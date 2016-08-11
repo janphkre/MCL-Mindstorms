@@ -36,7 +36,7 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	private Connector connector;
 	
 	/**
-	 * @param settingsGui the {@link Settings} on which this class should register itself and its settings that will be used.
+	 * @param settingsGui the {@link Settings} on which this class should register itself.
 	 */
 	public NXTSettingsListener(Settings settingsGui) {
 		super(settingsGui);
@@ -50,6 +50,7 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		this.connector = connector;
 	}
 	
+	@Override
 	public void createSettings() {
 		settingsGui.registerSetting(PARTICLE_COUNT_KEY, "Particle count", "2000");
 		settingsGui.registerSetting(REMEMBER_FACTOR_KEY, "Remember factor", "0.8");
@@ -75,6 +76,9 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		registerNXTListener();
 	}
 	
+	/**
+	 * Registers this object as a listener for its settings.
+	 */
 	protected void registerNXTListener() {
 		settingsGui.registerListener(MOVE_ROTATION_NOISE_KEY, this);
 		settingsGui.registerListener(MOVE_DISTANCE_NOISE_KEY, this);
@@ -82,11 +86,26 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		settingsGui.registerListener(MIN_MOVE_DISTANCE_KEY, this);
 		settingsGui.registerListener(MAX_MOVE_DISTANCE_KEY, this);
 		settingsGui.registerListener(BAD_DELTA_KEY, this);
+		settingsGui.registerListener(ROTATE_SPEED_KEY, this);
+		settingsGui.registerListener(TRAVEL_SPEED_KEY, this);
+		settingsGui.registerListener(CLEARANCE_KEY, this);
+		settingsGui.registerListener(COLOR_CUTOFF_KEY, this);
+		settingsGui.registerListener(LIGHT_CUTOFF_KEY, this);
+		settingsGui.registerListener(ROTATION_START_ANGLE_KEY, this);
+		settingsGui.registerListener(VERBOSE_ROBOT_KEY, this);
+		
 	}
 	
+	/**
+	 * Notifier for all elements that use a {@code double} value.
+	 * @param key the key to which the value belongs.
+	 * @param value the value that (may have) changed.
+	 * @return true if the key was found.
+	 */
 	private boolean notifyDouble(String key, String value) {
 		try {
 			final double valueNumber = Double.parseDouble(value);
+			super.notifySetting(key, value);
 			if(key.equals(MOVE_ROTATION_NOISE_KEY)) {
 				NXTMove.setRotationNoise(valueNumber);
 			} else if(key.equals(MOVE_DISTANCE_NOISE_KEY)) {
@@ -120,6 +139,12 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		return true;
 	}
 	
+	/**
+	 * Notifier for all elements that use a {@code boolean} value.
+	 * @param key the key to which the value belongs.
+	 * @param value the value that (may have) changed.
+	 * @return true if the key was found.
+	 */
 	private boolean notifyBoolean(String key, String value) {
 		final boolean valueBoolean = Boolean.parseBoolean(value);
 		if(key.equals(VERBOSE_ROBOT_KEY)) {
@@ -132,9 +157,7 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	
 	@Override
 	public void notifySetting(String key, String value) {
-		super.notifySetting(key, value);
 		if(notifyDouble(key, value)) return;
 		notifyBoolean(key, value);
 	}
-	
 }

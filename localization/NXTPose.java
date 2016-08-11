@@ -10,7 +10,7 @@ import lejos.robotics.navigation.Pose;
 
 /**
  * Implementation of {@link IPose2D} for {@link NXTMove}.<br/>
- * This class may be used in the context of the NXT environment. 
+ * This class is used in the context of the NXT environment. 
  * 
  * @author Arno von Borries
  * @author Jan Phillip Kretzschmar
@@ -24,7 +24,7 @@ public final class NXTPose implements IPose2D<NXTPose,NXTMove> {
 	/**
 	 * @param x the X coordinate of the pose.
 	 * @param y the Y coordinate of the pose.
-	 * @param heading the heading of the pose in radiant.
+	 * @param heading the heading of the pose in radians.
 	 */
 	public NXTPose(float x, float y, float heading) {
 		pose = new Pose(x, y, (float) Math.toDegrees(heading));
@@ -33,7 +33,7 @@ public final class NXTPose implements IPose2D<NXTPose,NXTMove> {
 	/**
 	 * @param x the X coordinate of the pose.
 	 * @param y the Y coordinate of the pose.
-	 * @param heading the heading of the pose in radiant or degrees.
+	 * @param heading the heading of the pose in radians or degrees.
 	 * @param isDegrees true if the heading is in degrees.
 	 */
 	public NXTPose(float x, float y, float heading, boolean isDegrees) {
@@ -88,5 +88,4 @@ public final class NXTPose implements IPose2D<NXTPose,NXTMove> {
 		final double vectorY = pose.getY() - position.getY();
 		return Math.sqrt(vectorX*vectorX + vectorY*vectorY);
 	}
-
 }

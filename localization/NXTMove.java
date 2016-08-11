@@ -10,8 +10,8 @@ import aima.core.util.Util;
 import aima.gui.applications.robotics.util.GuiBase;
 
 /**
- * This class implements {@link IMclMove} for the NXT environment. Basically it is a list of {@link Move} that were performed by the NXT.
- * 
+ * This class implements {@link IMclMove} for the NXT environment. It is a list of {@link Move} that were performed by the NXT.
+ * The noise values are interpreted as maximum percentage values of the actual move.
  * @author Arno von Borries
  * @author Jan Phillip Kretzschmar
  * @author Andreas Walscheid
@@ -19,14 +19,14 @@ import aima.gui.applications.robotics.util.GuiBase;
  */
 public final class NXTMove implements IMclMove<NXTMove> {
 	
-	private static float ROTATION_NOISE;//maximum percentage
-	private static float MOVEMENT_NOISE;//maximum percentage
+	private static float ROTATION_NOISE;
+	private static float MOVEMENT_NOISE;
 	
 	private LinkedList<Move> moveList = new LinkedList<Move>();
 	
 	/**
 	 * Sets the move noise model for the rotation.
-	 * @param value the radiant value of the noise.
+	 * @param value the percentage value of the noise.
 	 */
 	public static void setRotationNoise(double value) {
 		ROTATION_NOISE = (float) value;
@@ -34,7 +34,7 @@ public final class NXTMove implements IMclMove<NXTMove> {
 	
 	/**
 	 * Sets the move noise model for the distance.
-	 * @param value the absolute value of the noise.
+	 * @param value the percentage value of the noise.
 	 */
 	public static void setMovementNoise(double value) {
 		MOVEMENT_NOISE = (float) value;
@@ -56,6 +56,10 @@ public final class NXTMove implements IMclMove<NXTMove> {
 		return moveList.iterator();
 	}
 	
+	/**
+	 * Returns whether the list of moves is empty.
+	 * @return {@code true} if the list is empty.
+	 */
 	public boolean isEmpty() {
 		return moveList.isEmpty();
 	}

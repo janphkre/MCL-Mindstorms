@@ -42,6 +42,9 @@ public final class NXTPositionFactory implements IPoseFactory<NXTPose,NXTMove> {
 		return false;
 	}
 	
+	/**
+	 * A pair for two floats.
+	 */
 	private static class AnglePair extends Pair<Float,Float> {
 		public AnglePair(Float a, Float b) {
 			super(a, b);

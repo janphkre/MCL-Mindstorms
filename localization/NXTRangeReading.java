@@ -14,11 +14,11 @@ import aima.core.util.Util;
  */
 public final class NXTRangeReading extends AbstractRangeReading {
 
-	private static double RANGE_NOISE = 2.0d;//cm
+	private static double RANGE_NOISE = 2.0d;
 	
 	/**
 	 * Sets the noise model for all range readings.
-	 * @param value the noise of the model.
+	 * @param value the noise of the model in cm.
 	 */
 	public static void setRangeNoise(double value) {
 		RANGE_NOISE = value;
@@ -46,5 +46,4 @@ public final class NXTRangeReading extends AbstractRangeReading {
 		final double adaptedRangeReading = Util.generateRandomDoubleBetween(getValue() - RANGE_NOISE, getValue() + RANGE_NOISE);
 		return new NXTRangeReading(adaptedRangeReading,getAngle());
 	}
-
 }
