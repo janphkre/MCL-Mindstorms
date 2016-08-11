@@ -1,0 +1,13 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g id="validMovementArea">
+<rect x="295.0" y="300.0" width="405.0" height="10.0"/>
+</g>
+<g id="obstacles">
+<rect x="315.0" y="325.0" width="50.0" height="50.0"/>
+<rect x="385.0" y="325.0" width="50.0" height="50.0"/>
+<rect x="475.0" y="325.0" width="50.0" height="50.0"/>
+<rect x="545.0" y="325.0" width="50.0" height="50.0"/>
+<rect x="635.0" y="325.0" width="50.0" height="50.0"/>
+<line x1="270.0" x2="725.0" y1="375.0" y2="375.0"/>
+</g>
+</svg>
