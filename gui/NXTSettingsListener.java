@@ -1,7 +1,13 @@
 package gui;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import aima.core.robotics.datatypes.RobotException;
 import aima.gui.applications.robotics.GenericMonteCarloLocalization2DApp;
 import aima.gui.applications.robotics.components.AbstractSettingsListener;
+import aima.gui.applications.robotics.components.ButtonPanel;
+import aima.gui.applications.robotics.components.IRobotGui;
 import aima.gui.applications.robotics.components.Settings;
 import bot.Connector;
 import localization.NXTMove;
@@ -32,8 +38,9 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	public static final String LIGHT_CUTOFF_KEY = "LIGHT_CUTOFF";
 	public static final String ROTATION_START_ANGLE_KEY = "ROTATION_START_ANGLE";
 	public static final String VERBOSE_ROBOT_KEY = "VERBOSE_ROBOT";
-	
+	public static final String CUTOFF_BUTTON_KEY = "CUTOFF_BUTTON";
 	private Connector connector;
+	private IRobotGui robotGui;
 	
 	/**
 	 * @param settingsGui the {@link Settings} on which this class should register itself.
@@ -45,13 +52,33 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	/**
 	 * Sets the {@link Connector} on which the settings will be updated.
 	 * @param connector the robot to be kept up to date with the correct parameters.
+	 * @param robotGui the GUI associated with the connector.
 	 */
-	public void setRobot(Connector connector) {
+	public void setRobot(Connector connector, IRobotGui robotGui) {
 		this.connector = connector;
+		this.robotGui = robotGui;
 	}
 	
 	@Override
 	public void createSettings() {
+		ButtonPanel buttonPanel = new ButtonPanel("Autotune cutoffs", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					final int[] values = connector.findCutoffs();
+					if(values == null) robotGui.notifyInitialize();
+					else {
+						settingsGui.setSetting(COLOR_CUTOFF_KEY, String.valueOf(values[0]));
+						settingsGui.setSetting(LIGHT_CUTOFF_KEY, String.valueOf(values[1]));
+						settingsGui.updateGuiSetting(COLOR_CUTOFF_KEY);
+						settingsGui.updateGuiSetting(LIGHT_CUTOFF_KEY);
+					}
+				} catch (RobotException e) {
+					/*A RobotException may be thrown if the robot disconnected for some reason.*/
+				}
+			}
+		});
+		
 		settingsGui.registerSetting(PARTICLE_COUNT_KEY, "Particle count", "2000");
 		settingsGui.registerSetting(REMEMBER_FACTOR_KEY, "Remember factor", "0.8");
 		settingsGui.registerSetting(SENSOR_RANGE_KEY, "Max. sensor range", "400.0");
@@ -69,6 +96,7 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		settingsGui.registerSetting(CLEARANCE_KEY, "Object clearance", "25.0");
 		settingsGui.registerSetting(COLOR_CUTOFF_KEY, "Color cutoff", "5");
 		settingsGui.registerSetting(LIGHT_CUTOFF_KEY, "Light cutoff", "40");
+		settingsGui.registerSpecialSetting(CUTOFF_BUTTON_KEY, buttonPanel);
 		settingsGui.registerSetting(ROTATION_START_ANGLE_KEY, "Search start angle", "5");
 		settingsGui.registerSetting(VERBOSE_ROBOT_KEY, "Verbose NXT", "false");
 

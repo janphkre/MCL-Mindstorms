@@ -62,6 +62,6 @@ public final class NXTApp extends MonteCarloLocalizationApp  {
 		angles.setChangeListener(robot);
 		settingsListener.setMap(map);
 		settingsListener.setMcl(mcl);
-		settingsListener.setRobot(robot);
+		settingsListener.setRobot(robot, robotGui);
 	}
 }

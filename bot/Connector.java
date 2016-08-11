@@ -41,7 +41,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	 */
 	public static final double MAX_RANGE_READING = 255.0d;
 	
-	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END, FIND_CUTOFFS};
+	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END, FIND_CUTOFFS, CUTOFFS};
 	
 	private Message moveType = Message.GET_LINE_MOVE;
 	private Angle[] rangeReadingAngles;
@@ -50,8 +50,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	private DataInputStream in; //only used in the second thread. No synchronization!
 	private DataOutputStream out; //synchronized, just to be sure between GUI and MCL/Core!
 	private Thread connectionThread;
-	private SynchronousQueue<AbstractRangeReading[]> rangeQueue;
-	private SynchronousQueue<NXTMove> moveQueue;
+	private SynchronousQueue<Object> resultQueue;
 	private float minDistance;
 	private float maxDistance;
 	private double rotateSpeed;
@@ -68,8 +67,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	 */
 	public Connector(Angle[] rangeReadingAngles) {
 		this.rangeReadingAngles = rangeReadingAngles;
-		this.rangeQueue = new SynchronousQueue<AbstractRangeReading[]>();
-		this.moveQueue = new SynchronousQueue<NXTMove>();
+		this.resultQueue = new SynchronousQueue<Object>();
 	}
 	
 	/**
@@ -179,8 +177,6 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 			sendSetting(Message.SET_COLOR_CUTOFF.ordinal(), colorCutoff);
 			sendSetting(Message.SET_LIGHT_CUTOFF.ordinal(), lightCutoff);
 			sendSetting(Message.SET_ROTATION_START_ANGLE.ordinal(), rotationStartAngle);
-			
-			findCutoffs();
 	}
 	
 	/**
@@ -350,13 +346,24 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	
 	/**
 	 * Makes the robot find cut off values for the color and light sensors.
+	 * @return returns the found cutoff values. {@code null} will be returned if the robot is not connected.
+	 * throws RobotException thrown if an error occurred.
 	 */
-	public void findCutoffs() {
+	public int[] findCutoffs() throws RobotException {
+		if(!connected) return null;
 		try {
 			out.write(Message.FIND_CUTOFFS.ordinal());
 			out.flush();
 		} catch(IOException e) {
 			ioException();
+		}
+		try {
+			Object result = resultQueue.take();
+			if(result instanceof int[]) return (int[]) result;
+			else throw new RobotException();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RobotException();
 		}
 	}
 	
@@ -378,15 +385,14 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 				throw new RobotException();
 			}
 		}
-		AbstractRangeReading[] result = null;
 		try {
-			result = rangeQueue.take();
+			Object result = resultQueue.take();
+			if(result instanceof AbstractRangeReading[]) return (AbstractRangeReading[]) result;
+			else throw new RobotException();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			throw new RobotException();
 		}
-		if(result.length == 0) throw new RobotException();
-		return result;
 	}
 
 	@Override
@@ -416,15 +422,14 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 				throw new RobotException();
 			}
 		}
-		NXTMove result = null;
 		try {
-			result = moveQueue.take();
+			Object result = resultQueue.take();
+			if(result instanceof NXTMove) return (NXTMove) result;
+			else throw new RobotException();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			throw new RobotException();
 		}
-		if(result.isEmpty()) throw new RobotException();
-		return result;
 	}
 	
 	@Override
@@ -444,27 +449,31 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 					for(int i=0;i < rangeReadingAngles.length;i++) {
 						ranges[i] = new NXTRangeReading(rangeReadings.getRange(i),rangeReadingAngles[i]);
 					}
-					rangeQueue.put(ranges);
+					resultQueue.put(ranges);
 					break;
 				case MOVE:
-					//sent after each segment of a move has stopped.
+					//Sent after each segment of a move has stopped.
 					Move move = new Move(false, 0, 0);
 					move.loadObject(in);
 					currentMove.add(move);
 					break;
 				case MOVE_END:
 					//As the particles shall only be updated once after the complete move has come to an end, this message is needed too.
-					moveQueue.put(currentMove);
+					resultQueue.put(currentMove);
 					currentMove = new NXTMove();
 					break;
-				case FIND_CUTOFFS:
-					System.out.println(in.readInt());
+				case CUTOFFS:
+					//The values that have been found for the sensors as cutoff values.
+					int[] values = new int[2];
+					values[0] = in.readInt();
+					values[1] = in.readInt();
+					resultQueue.put(values);
+					break;
 				default:
 				}
 			} catch (IOException e) {
 				ioException();
-				moveQueue.offer(new NXTMove());
-				rangeQueue.offer(new AbstractRangeReading[0]);
+				resultQueue.offer(new Object());
 				break;
 			} catch (InterruptedException e) {
 				break;

@@ -1,6 +1,9 @@
+package daemon;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.Random;
 
 import lejos.nxt.Button;
@@ -35,7 +38,7 @@ import lejos.robotics.navigation.MoveProvider;
  */
 public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	
-	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END, FIND_CUTOFFS};
+	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END, FIND_CUTOFFS, CUTOFFS};
 	private static final RegulatedMotor HEAD_MOTOR = Motor.B;
 	private static final RegulatedMotor LEFT_MOTOR = Motor.A;
 	private static final RegulatedMotor RIGHT_MOTOR = Motor.C;
@@ -68,6 +71,9 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	private int lightCutoff;
 	private int rotationStartAngle;
 	private boolean verbose = false;
+	private boolean notifyPCMove = true;
+	private boolean notifyRobotMove = false;
+	private LinkedList<Move> restoreList = new LinkedList<Move>();
 	
 	/**
 	 * Creates a new instance of the MclDaemon and runs it.
@@ -109,15 +115,10 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		System.getRuntime().halt(0);
 	}
 	
-	/**
-	 * Handles an exception.
-	 */
-	private void exception() {
-		System.out.println("IO Exception");
-		close();
-	}
-	
-	private void findCutoffs() {
+	private void findCutoffs() throws IOException {
+		notifyPCMove = false;
+		notifyRobotMove = true;
+		restoreList.clear();
 		//line values:
 		int colorValue = color.getColorID();
 		int lightValue = light.readValue();
@@ -162,9 +163,37 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 		//Calculate cutoffs/mean:
 		colorValue /= CUTOFF_MEASUREMENTS * 2;
 		lightValue /= CUTOFF_MEASUREMENTS * 2;
-		colorCutoff = colorValue;
-		lightCutoff = lightValue;
+		//Reset position:
+		notifyRobotMove = false;
 		while(HEAD_MOTOR.isMoving()) Thread.yield();
+		while(pilot.isMoving()) Thread.yield();
+		for(int i=restoreList.size()-1;i >= 0;i--) {
+			final Move m = restoreList.remove(i);
+			if(m.getMoveType() == Move.MoveType.TRAVEL) {
+				pilot.travel(-m.getDistanceTraveled());
+				continue;
+			}
+			if(m.getMoveType() == Move.MoveType.ROTATE) {
+				pilot.rotate(-m.getAngleTurned());
+				continue;
+			}
+			if(m.getMoveType() == Move.MoveType.ARC) {
+				pilot.arc(m.getArcRadius(),-m.getAngleTurned());
+				continue;
+			}
+		}
+		pilot.stop();
+		while(pilot.isMoving()) Thread.yield();
+		notifyRobotMove = false;
+		restoreList.clear();
+		notifyPCMove = true;
+		//Send values to the PC:
+		synchronized(out) {
+			out.write(Message.CUTOFFS.ordinal());
+			out.writeInt(colorValue);
+			out.writeInt(lightValue);
+			out.flush();
+		}
 	}
 	
 	/**
@@ -331,10 +360,10 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 					verbose = in.readBoolean();
 					break;
 				default:
-					System.out.println("MESSAGE:"+message.ordinal()+"?");
+					System.out.println("UNKNOWN:"+message.ordinal());
 				}
 			} catch (IOException e) {
-				exception();
+				close();
     		}
 			System.gc();
 		}
@@ -345,20 +374,23 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 
 	@Override
 	public void moveStopped(Move event, MoveProvider mp) {
-		synchronized(out) {
-			try {
-				out.write(Message.MOVE.ordinal());
-				event.dumpObject(out);
-				out.flush();
-			} catch (IOException e) {
-				exception();
+		if(notifyPCMove) {
+			synchronized(out) {
+				try {
+					out.write(Message.MOVE.ordinal());
+					event.dumpObject(out);
+					out.flush();
+				} catch (IOException e) {
+					close();
+				}
 			}
+		} else if(notifyRobotMove) {
+			restoreList.add(event);
 		}
 	}
 
 	@Override
 	public void buttonPressed(Button b) {
-		System.out.println("Exit");
 		close();
 	}
 
