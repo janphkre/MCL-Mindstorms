@@ -7,7 +7,7 @@ import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
 import aima.core.robotics.datatypes.IMclMove;
 import aima.core.util.Util;
-import aima.gui.applications.robotics.util.GuiBase;
+import aima.gui.swing.demo.robotics.util.GuiBase;
 
 /**
  * This class implements {@link IMclMove} for the NXT environment. It is a list of {@link Move} that were performed by the NXT.

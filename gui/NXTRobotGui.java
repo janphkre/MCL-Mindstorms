@@ -3,9 +3,9 @@ package gui;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
-import aima.gui.applications.robotics.components.IRobotGui;
-import aima.gui.applications.robotics.components.Settings;
-import aima.gui.applications.robotics.util.GuiBase;
+import aima.gui.swing.demo.robotics.components.IRobotGui;
+import aima.gui.swing.demo.robotics.components.Settings;
+import aima.gui.swing.demo.robotics.util.GuiBase;
 import bot.Connector;
 
 /**

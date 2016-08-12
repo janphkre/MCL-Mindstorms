@@ -17,8 +17,8 @@ import aima.core.robotics.IMclRobot;
 import aima.core.robotics.datatypes.RobotException;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.AbstractRangeReading;
-import aima.gui.applications.robotics.components.AnglePanel.ChangeListener;
-import aima.gui.applications.robotics.util.GuiBase;
+import aima.gui.swing.demo.robotics.components.AnglePanel.ChangeListener;
+import aima.gui.swing.demo.robotics.util.GuiBase;
 
 /**
  * This class establishes and manages the connection to the NXT robot.<br/>

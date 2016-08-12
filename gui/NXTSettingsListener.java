@@ -4,11 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import aima.core.robotics.datatypes.RobotException;
-import aima.gui.applications.robotics.GenericMonteCarloLocalization2DApp;
-import aima.gui.applications.robotics.components.AbstractSettingsListener;
-import aima.gui.applications.robotics.components.ButtonPanel;
-import aima.gui.applications.robotics.components.IRobotGui;
-import aima.gui.applications.robotics.components.Settings;
+import aima.gui.swing.demo.robotics.GenericMonteCarloLocalization2DApp;
+import aima.gui.swing.demo.robotics.components.AbstractSettingsListener;
+import aima.gui.swing.demo.robotics.components.ButtonPanel;
+import aima.gui.swing.demo.robotics.components.IRobotGui;
+import aima.gui.swing.demo.robotics.components.Settings;
 import bot.Connector;
 import localization.NXTMove;
 import localization.NXTRangeReading;
