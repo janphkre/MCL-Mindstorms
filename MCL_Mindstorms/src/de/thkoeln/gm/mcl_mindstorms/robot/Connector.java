@@ -347,7 +347,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	/**
 	 * Makes the robot find cut off values for the color and light sensors.
 	 * @return returns the found cutoff values. {@code null} will be returned if the robot is not connected.
-	 * throws RobotException thrown if an error occurred.
+	 * @throws RobotException thrown if an error occurred.
 	 */
 	public int[] findCutoffs() throws RobotException {
 		if(!connected) return null;
