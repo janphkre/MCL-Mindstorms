@@ -25,17 +25,17 @@ public final class NXTPositionFactory implements IPoseFactory<NXTPose,NXTMove> {
 	public NXTPose getPose(Point2D point) {
 		final int index = Util.randomNumberBetween(0,validHeadings.length-1);
 		final double heading = Util.generateRandomDoubleBetween(validHeadings[index].getFirst(), validHeadings[index].getSecond());
-		return new NXTPose((float) point.getX(), (float) point.getY(), (float) heading);
+		return new NXTPose((float) point.getX(), (float) point.getY(), (float) heading, true);
 	}
 
 	@Override
 	public NXTPose getPose(Point2D point, double heading) {
-		return new NXTPose((float) point.getX(), (float) point.getY(), (float) heading);
+		return new NXTPose((float) point.getX(), (float) point.getY(), (float) heading, true);
 	}
 	
 	@Override
 	public boolean isHeadingValid(NXTPose pose) {
-		final double heading = pose.getHeading();
+		final double heading = pose.getDegreeHeading();
 		for(AnglePair headingRange: validHeadings) {
 			if(heading >= headingRange.getFirst() && heading <= headingRange.getSecond()) return true;
 		}

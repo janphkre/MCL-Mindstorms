@@ -35,6 +35,7 @@ public final class NXTApp extends MonteCarloLocalizationApp  {
 		File settingsFile = args.length > 0 ? new File(args[0]) : DEFAULT_SETTINGS_FILE;
 		NXTApp app = new NXTApp(settingsFile);
 		app.constructApplicationFrame();
+		app.notifyAllListeners();
 		app.show();
 	}
 	
@@ -63,5 +64,6 @@ public final class NXTApp extends MonteCarloLocalizationApp  {
 		settingsListener.setMap(map);
 		settingsListener.setMcl(mcl);
 		settingsListener.setRobot(robot, robotGui);
+		settingsListener.setMainApp(app);
 	}
 }

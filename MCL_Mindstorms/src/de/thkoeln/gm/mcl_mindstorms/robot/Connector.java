@@ -13,8 +13,8 @@ import lejos.robotics.RangeReadings;
 import lejos.robotics.navigation.Move;
 import aima.core.robotics.IMclRobot;
 import aima.core.robotics.datatypes.RobotException;
-import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.AbstractRangeReading;
+import aima.core.robotics.impl.datatypes.Angle;
 import aima.gui.swing.demo.robotics.components.AnglePanel.ChangeListener;
 import aima.gui.swing.demo.robotics.util.GuiBase;
 import de.thkoeln.gm.mcl_mindstorms.localization.NXTMove;
@@ -40,8 +40,11 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	 * The distance that the ultrasonic sensor will return as a maximum in cm.
 	 */
 	public static final double MAX_RANGE_READING = 255.0d;
-	
-	private static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END, FIND_CUTOFFS, CUTOFFS};
+	/**
+	 * This enum defines all messages that are exchanged with the NXT.
+	 */
+	@SuppressWarnings("javadoc")
+	public static enum Message {SET_VERBOSE, SET_ANGLES, SET_MIN_DISTANCE, SET_MAX_DISTANCE, SET_ROTATE_SPEED, SET_TRAVEL_SPEED, SET_SAFE_SPACE, SET_COLOR_CUTOFF, SET_LIGHT_CUTOFF, SET_ROTATION_START_ANGLE, GET_RANGES, GET_LINE_MOVE, GET_RANDOM_MOVE, RANGES, MOVE, MOVE_END, FIND_CUTOFFS, CUTOFFS};
 	
 	private Message moveType = Message.GET_LINE_MOVE;
 	private Angle[] rangeReadingAngles;
@@ -99,7 +102,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	 */
 	private void ioException() {
 		close();
-		GuiBase.showMessageBox("IOException! Did the de.thkoeln.gm.mcl_mindstorms.robot die?");
+		GuiBase.showMessageBox("IOException! Did the NXT die?");
 	}
 	
 	/**
@@ -342,6 +345,14 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	public void setRotationStartAngle(int angle) {
 		rotationStartAngle = angle;
 		if(connected) sendSetting(Message.SET_ROTATION_START_ANGLE.ordinal(), angle);
+	}
+	
+	/**
+	 * Sets the message that is sent when a move should be performed.
+	 * @param moveType the message to be set as a command for the NXT to perform a move.
+	 */
+	public void setMoveMessage(Message moveType) {
+		this.moveType = moveType;
 	}
 	
 	/**

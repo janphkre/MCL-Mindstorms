@@ -12,6 +12,7 @@ import aima.gui.swing.demo.robotics.components.Settings;
 import de.thkoeln.gm.mcl_mindstorms.localization.NXTMove;
 import de.thkoeln.gm.mcl_mindstorms.localization.NXTRangeReading;
 import de.thkoeln.gm.mcl_mindstorms.robot.Connector;
+import de.thkoeln.gm.mcl_mindstorms.robot.Connector.Message;
 
 /**
  * This settings listener is used for the NXT environment.
@@ -39,6 +40,8 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	public static final String ROTATION_START_ANGLE_KEY = "ROTATION_START_ANGLE";
 	public static final String VERBOSE_ROBOT_KEY = "VERBOSE_ROBOT";
 	public static final String CUTOFF_BUTTON_KEY = "CUTOFF_BUTTON";
+	public static final String MOVE_COMMAND_KEY = "MOVE_COMMAND";
+	
 	private Connector connector;
 	private IRobotGui robotGui;
 	private GenericMonteCarloLocalization2DApp<?, ?, ?> mainApp;
@@ -114,6 +117,7 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		settingsGui.registerSetting(COLOR_CUTOFF_KEY, "Color cutoff", "5");
 		settingsGui.registerSetting(LIGHT_CUTOFF_KEY, "Light cutoff", "40");
 		settingsGui.registerSpecialSetting(CUTOFF_BUTTON_KEY, buttonPanel);
+		settingsGui.registerSetting(MOVE_COMMAND_KEY, "Move command", "GET_LINE_MOVE");
 		settingsGui.registerSetting(ROTATION_START_ANGLE_KEY, "Search start angle", "5");
 		settingsGui.registerSetting(VERBOSE_ROBOT_KEY, "Verbose NXT", "false");
 
@@ -136,9 +140,9 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		settingsGui.registerListener(CLEARANCE_KEY, this);
 		settingsGui.registerListener(COLOR_CUTOFF_KEY, this);
 		settingsGui.registerListener(LIGHT_CUTOFF_KEY, this);
+		settingsGui.registerListener(MOVE_COMMAND_KEY, this);
 		settingsGui.registerListener(ROTATION_START_ANGLE_KEY, this);
 		settingsGui.registerListener(VERBOSE_ROBOT_KEY, this);
-		
 	}
 	
 	/**
@@ -148,9 +152,9 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	 * @return true if the key was found.
 	 */
 	private boolean notifyDouble(String key, String value) {
+		final boolean superCall = super.notifySetting(key, value);
 		try {
 			final double valueNumber = Double.parseDouble(value);
-			super.notifySetting(key, value);
 			if(key.equals(MOVE_ROTATION_NOISE_KEY)) {
 				NXTMove.setRotationNoise(valueNumber);
 			} else if(key.equals(MOVE_DISTANCE_NOISE_KEY)) {
@@ -176,9 +180,29 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 			} else if(key.equals(ROTATION_START_ANGLE_KEY)) {
 				connector.setRotationStartAngle((int) valueNumber);
 			} else {
-				return false;
+				throw new NumberFormatException();
 			}
 		} catch(NumberFormatException e) {
+			return superCall;
+		}
+		return true;
+	}
+	
+	/**
+	 * Notifier for all elements that use a String defining a {@code Connector.Message}.
+	 * @param key the key to which the value belongs.
+	 * @param value the value that (may have) changed.
+	 * @return true if the key was found.
+	 */
+	private boolean notifyMessage(String key, String value) {
+		try {
+			final Message valueMessage = Message.valueOf(value);
+			if(key.equals(MOVE_COMMAND_KEY)) {
+				connector.setMoveMessage(valueMessage);
+			} else {
+				throw new IllegalArgumentException();
+			}
+		} catch(IllegalArgumentException e) {
 			return false;
 		}
 		return true;
@@ -201,8 +225,10 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	}
 	
 	@Override
-	public void notifySetting(String key, String value) {
-		if(notifyDouble(key, value)) return;
-		notifyBoolean(key, value);
+	public boolean notifySetting(String key, String value) {
+		if(notifyDouble(key, value)) return true;
+		if(notifyMessage(key, value)) return true;
+		if(notifyBoolean(key, value)) return true;
+		return false;
 	}
 }

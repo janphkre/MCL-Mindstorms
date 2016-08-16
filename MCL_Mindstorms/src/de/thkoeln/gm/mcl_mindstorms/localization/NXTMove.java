@@ -71,18 +71,18 @@ public final class NXTMove implements IMclMove<NXTMove> {
 			Move moveNew;
 			if(move.getMoveType() == MoveType.TRAVEL) {
 				final float maxDistanceNoise = MOVEMENT_NOISE * (move.getDistanceTraveled());
-				final float distance = Util.generateRandomFloatBetween(move.getDistanceTraveled() - maxDistanceNoise, move.getDistanceTraveled() - maxDistanceNoise);
+				final float distance = Util.generateRandomFloatBetween(move.getDistanceTraveled() - maxDistanceNoise, move.getDistanceTraveled() + maxDistanceNoise);
 				moveNew = new Move(MoveType.TRAVEL,distance,0.0f,move.isMoving());
 			} else if(move.getMoveType() == MoveType.ROTATE) {
 				final float maxRotationNoise = ROTATION_NOISE * (move.getAngleTurned());
-				final float angle = Util.generateRandomFloatBetween(move.getAngleTurned() - maxRotationNoise, move.getDistanceTraveled() - maxRotationNoise);
-				moveNew = new Move(MoveType.TRAVEL,0.0f,angle,move.isMoving());
+				final float angle = Util.generateRandomFloatBetween(move.getAngleTurned() - maxRotationNoise, move.getDistanceTraveled() + maxRotationNoise);
+				moveNew = new Move(MoveType.ROTATE,0.0f,angle,move.isMoving());
 			} else if(move.getMoveType() == MoveType.ARC) {
 				final float maxDistanceNoise = MOVEMENT_NOISE * (move.getDistanceTraveled());
 				final float maxRotationNoise = ROTATION_NOISE * (move.getAngleTurned());
-				final float distance = Util.generateRandomFloatBetween(move.getDistanceTraveled() - maxDistanceNoise, move.getDistanceTraveled() - maxDistanceNoise);
-				final float angle = Util.generateRandomFloatBetween(move.getAngleTurned() - maxRotationNoise, move.getDistanceTraveled() - maxRotationNoise);
-				moveNew = new Move(MoveType.TRAVEL,distance,angle,move.isMoving());
+				final float distance = Util.generateRandomFloatBetween(move.getDistanceTraveled() - maxDistanceNoise, move.getDistanceTraveled() + maxDistanceNoise);
+				final float angle = Util.generateRandomFloatBetween(move.getAngleTurned() - maxRotationNoise, move.getDistanceTraveled() + maxRotationNoise);
+				moveNew = new Move(MoveType.ARC,distance,angle,move.isMoving());
 			} else {
 				moveNew = new Move(MoveType.STOP,0.0f,0.0f,false);
 			}

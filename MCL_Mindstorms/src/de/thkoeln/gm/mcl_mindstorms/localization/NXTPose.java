@@ -2,11 +2,11 @@ package de.thkoeln.gm.mcl_mindstorms.localization;
 
 import java.util.Iterator;
 
-import aima.core.robotics.impl.datatypes.Angle;
-import aima.core.robotics.impl.datatypes.IPose2D;
 import lejos.robotics.navigation.Move;
 import lejos.robotics.navigation.Move.MoveType;
 import lejos.robotics.navigation.Pose;
+import aima.core.robotics.impl.datatypes.Angle;
+import aima.core.robotics.impl.datatypes.IPose2D;
 
 /**
  * Implementation of {@link IPose2D} for {@link NXTMove}.<br/>
@@ -28,6 +28,7 @@ public final class NXTPose implements IPose2D<NXTPose,NXTMove> {
 	 */
 	public NXTPose(float x, float y, float heading) {
 		pose = new Pose(x, y, (float) Math.toDegrees(heading));
+		normalizeHeading();
 	}
 	
 	/**
@@ -42,6 +43,25 @@ public final class NXTPose implements IPose2D<NXTPose,NXTMove> {
 		} else {
 			pose = new Pose(x, y, (float) Math.toDegrees(heading));
 		}
+		normalizeHeading();
+	}
+	
+	/**
+	 * Normalizes the heading to a value between +180 degree and -180 degree.
+	 */
+	private void normalizeHeading() {
+		float heading = pose.getHeading() % 360;
+		if(heading > 180) heading -= 360;
+		if(heading < -180) heading += 360;
+		pose.setHeading(heading);
+	}
+	
+	/**
+	 * Returns the heading in degrees.
+	 * @return the heading in degrees.
+	 */
+	public float getDegreeHeading() {
+		return pose.getHeading();
 	}
 	
 	@Override
@@ -52,14 +72,15 @@ public final class NXTPose implements IPose2D<NXTPose,NXTMove> {
 			Move move = iterator.next();
 			if(move.getMoveType() == MoveType.TRAVEL) result.pose.moveUpdate(move.getDistanceTraveled());
 			else if(move.getMoveType() == MoveType.ROTATE) result.pose.rotateUpdate(move.getAngleTurned());
-			else if(move.getMoveType() == MoveType.ARC) result.pose.arcUpdate(move.getDistanceTraveled(),move.getAngleTurned());
+			else if(move.getMoveType() == MoveType.ARC) result.pose.arcUpdate(move.getDistanceTraveled(), move.getAngleTurned());
 		}
+		result.normalizeHeading();
 		return result;
 	}
 
 	@Override
 	public NXTPose addAngle(Angle angle) {
-		return new NXTPose(pose.getX(), pose.getY(), pose.getHeading() + (float) angle.getDegreeValue(),true);
+		return new NXTPose(pose.getX(), pose.getY(), pose.getHeading()  + (float) angle.getDegreeValue(),true);
 	}
 	
 	@Override
