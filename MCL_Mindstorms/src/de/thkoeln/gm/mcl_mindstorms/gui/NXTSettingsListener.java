@@ -101,16 +101,16 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		
 		settingsGui.registerSetting(PARTICLE_COUNT_KEY, "Particle count", "2000");
 		settingsGui.registerSetting(REMEMBER_FACTOR_KEY, "Remember factor", "0.8");
-		settingsGui.registerSetting(SENSOR_RANGE_KEY, "Max. sensor range", "400.0");
+		settingsGui.registerSetting(SENSOR_RANGE_KEY, "Max. sensor range", "255.0");
 		settingsGui.registerSetting(MIN_WEIGHT_KEY, "Min. particle weight", "0.0");
 		
-		settingsGui.registerSetting(BAD_DELTA_KEY, "Bad range delta", "100.0");
-		settingsGui.registerSetting(MAX_DISTANCE_KEY, "Max. particle distance", "15.0");
-		settingsGui.registerSetting(MOVE_ROTATION_NOISE_KEY, "Move rotation noise (deg)", "20");
-		settingsGui.registerSetting(MOVE_DISTANCE_NOISE_KEY, "Move distance noise", "20.7188");
-		settingsGui.registerSetting(RANGE_READING_NOISE_KEY, "Range reading noise", "0.4486");
+		settingsGui.registerSetting(BAD_DELTA_KEY, "Bad range delta", "10.0");
+		settingsGui.registerSetting(MAX_DISTANCE_KEY, "Max. particle distance", "25.0");
+		settingsGui.registerSetting(MOVE_ROTATION_NOISE_KEY, "Move rotation noise (deg)", "1.0");
+		settingsGui.registerSetting(MOVE_DISTANCE_NOISE_KEY, "Move distance noise", "1.7");
+		settingsGui.registerSetting(RANGE_READING_NOISE_KEY, "Range reading noise", "1.0");
 		settingsGui.registerSetting(MIN_MOVE_DISTANCE_KEY, "Min. move distance", "10.0");
-		settingsGui.registerSetting(MAX_MOVE_DISTANCE_KEY, "Max. move distance", "40.6");
+		settingsGui.registerSetting(MAX_MOVE_DISTANCE_KEY, "Max. move distance", "20.0");
 		settingsGui.registerSetting(ROTATE_SPEED_KEY, "Rotation speed", "100.0");
 		settingsGui.registerSetting(TRAVEL_SPEED_KEY, "Travel speed", "50.0");
 		settingsGui.registerSetting(CLEARANCE_KEY, "Object clearance", "25.0");

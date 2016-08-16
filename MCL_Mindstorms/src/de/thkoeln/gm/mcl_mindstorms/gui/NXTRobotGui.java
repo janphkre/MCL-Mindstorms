@@ -64,7 +64,7 @@ public final class NXTRobotGui implements IRobotGui {
 	@Override
 	public void loadSettings(Settings settingsGui) {
 		robotNameField.setText(settingsGui.getSetting(ROBOT_NAME_KEY));
-		programField.setText(settingsGui.getSetting(ROBOT_PROGRAM_KEY));
+		programField.setText(settingsGui.getSetting(ROBOT_PROGRAM_KEY,"MclDaemon.nxj"));
 	}
 
 	@Override
