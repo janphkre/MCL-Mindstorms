@@ -4,11 +4,11 @@ This is a set of classes to enable the Lego NXT Robot to make use of the Monte-C
 
 The implementation consists of 2 parts:
 
-###1. [NXT daemon](/MCL_Mindstorms_NXT)
+###1. [NXT daemon](/MCL_Mindstorms_NXT/src/de/thkoeln/gm/mcl_mindstorms/daemon/MclDaemon.java)
 
 The NXT runs a daemon in the leJos runtime. This daemon awaits a bluetooth connection and process the commands which are sent from the PC.
 
-###2. [PC controls](/MCL_Mindstorms)
+###2. [PC controls](/MCL_Mindstorms/src/de/thkoeln/gm/mcl_mindstorms/gui/NXTApp.java)
 
 The PC is controlling the NXT. It displays a GUI from which the user can control the Monte-Carlo-Localization algorithm and the robot.
 All parameters regarding both algorithm and robot can be managed from this GUI.
