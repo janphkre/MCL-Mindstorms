@@ -28,7 +28,7 @@ import lejos.robotics.navigation.MoveListener;
 import lejos.robotics.navigation.MoveProvider;
 
 /**
- * A basic de.thkoeln.gm.mcl_mindstorms.daemon that is meant to run on the NXT to be able to control the robot for the Monte-Carlo-Localization.<br/>
+ * A basic daemon that is meant to run on the NXT to be able to control the robot for the Monte-Carlo-Localization.<br/>
  * First it awaits a bluetooth connection via {@code NXTConnection.PACKET} and awaits commands over that connection afterwards.<br/>
  * <br/>
  * A chart for Lego wheels  and a gear calculator can be found at:<br/>
@@ -375,6 +375,9 @@ public final class MclDaemon implements Runnable, ButtonListener, MoveListener {
 	@Override
 	public void moveStarted(Move event, MoveProvider mp) { }
 
+	/**
+	 * May notify either the PC or the robot itself that a {@link Move} was performed.
+	 */
 	@Override
 	public void moveStopped(Move event, MoveProvider mp) {
 		if(notifyPCMove) {
