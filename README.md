@@ -17,3 +17,8 @@ All parameters regarding both algorithm and robot can be managed from this GUI.
 
 In addition a few [SVG maps](/maps) for example environments included.
 A model created with the Lego Digital Designer and instructions to rebuild that model can be found in [LEGO instructions](/LEGO_instructions).
+
+####Authors:
+Arno v. Borries <br />
+Jan Phillip Kretzschmar <br />
+Andreas Walscheid
