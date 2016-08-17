@@ -73,7 +73,7 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 	
 	@Override
 	public void createSettings() {
-		Runnable autoTune = new Runnable() {
+		final Runnable autoTune = new Runnable() {
 			@Override
 			public void run() {
 				try {
