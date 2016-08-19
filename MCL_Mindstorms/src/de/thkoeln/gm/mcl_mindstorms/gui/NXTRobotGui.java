@@ -5,7 +5,7 @@ import javax.swing.JTextField;
 
 import aima.gui.swing.demo.robotics.components.IRobotGui;
 import aima.gui.swing.demo.robotics.components.Settings;
-import aima.gui.swing.demo.robotics.util.GuiBase;
+import aima.gui.swing.framework.util.GuiBase;
 import de.thkoeln.gm.mcl_mindstorms.robot.Connector;
 
 /**

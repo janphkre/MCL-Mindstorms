@@ -6,6 +6,7 @@ import aima.core.robotics.impl.MonteCarloLocalization;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.core.robotics.impl.datatypes.AbstractRangeReading;
 import aima.core.robotics.impl.map.MclCartesianPlot2D;
+import aima.core.util.JavaRandomizer;
 import aima.core.util.math.geom.SVGGroupParser;
 import aima.gui.swing.demo.robotics.GenericMonteCarloLocalization2DApp;
 import aima.gui.swing.demo.robotics.MonteCarloLocalizationApp;
@@ -57,7 +58,7 @@ public final class NXTApp extends MonteCarloLocalizationApp  {
 		MclCartesianPlot2D<NXTPose, NXTMove, AbstractRangeReading> map = new MclCartesianPlot2D<NXTPose,NXTMove,AbstractRangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory());
 		Connector robot = new Connector(angles.getAngles());
 		robotGui = new NXTRobotGui(robot);
-		MonteCarloLocalization<NXTPose,Angle,NXTMove,AbstractRangeReading> mcl = new MonteCarloLocalization<NXTPose, Angle, NXTMove, AbstractRangeReading>(map, robot);
+		MonteCarloLocalization<NXTPose,Angle,NXTMove,AbstractRangeReading> mcl = new MonteCarloLocalization<NXTPose, Angle, NXTMove, AbstractRangeReading>(map, new JavaRandomizer());
 		app = new GenericMonteCarloLocalization2DApp<NXTPose,NXTMove,NXTRangeReading>(mcl, map, robot, robotGui, settingsGui);
 		
 		angles.setChangeListener(robot);

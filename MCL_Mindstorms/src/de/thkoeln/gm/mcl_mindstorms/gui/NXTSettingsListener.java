@@ -100,12 +100,11 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		});
 		
 		settingsGui.registerSetting(PARTICLE_COUNT_KEY, "Particle count", "2000");
-		settingsGui.registerSetting(REMEMBER_FACTOR_KEY, "Remember factor", "0.8");
-		settingsGui.registerSetting(SENSOR_RANGE_KEY, "Max. sensor range", "255.0");
 		settingsGui.registerSetting(MIN_WEIGHT_KEY, "Min. particle weight", "0.0");
+		settingsGui.registerSetting(MAX_DISTANCE_KEY, "Max. particle distance", "25.0");
+		settingsGui.registerSetting(SENSOR_RANGE_KEY, "Max. sensor range", "255.0");
 		
 		settingsGui.registerSetting(BAD_DELTA_KEY, "Bad range delta", "10.0");
-		settingsGui.registerSetting(MAX_DISTANCE_KEY, "Max. particle distance", "25.0");
 		settingsGui.registerSetting(MOVE_ROTATION_NOISE_KEY, "Move rotation noise (deg)", "1.0");
 		settingsGui.registerSetting(MOVE_DISTANCE_NOISE_KEY, "Move distance noise", "1.7");
 		settingsGui.registerSetting(RANGE_READING_NOISE_KEY, "Range reading noise", "1.0");
@@ -166,7 +165,7 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 			} else if(key.equals(MAX_MOVE_DISTANCE_KEY)) {
 				connector.setMaxMoveDistance((float) valueNumber);
 			} else if(key.equals(BAD_DELTA_KEY)) {
-				connector.setBadDelta(valueNumber);
+				NXTRangeReading.setBadDelta(valueNumber);
 			} else if(key.equals(ROTATE_SPEED_KEY)) {
 				connector.setRotateSpeed(valueNumber);
 			} else if(key.equals(TRAVEL_SPEED_KEY)) {

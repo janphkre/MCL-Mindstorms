@@ -16,7 +16,7 @@ import aima.core.robotics.datatypes.RobotException;
 import aima.core.robotics.impl.datatypes.AbstractRangeReading;
 import aima.core.robotics.impl.datatypes.Angle;
 import aima.gui.swing.demo.robotics.components.AnglePanel.ChangeListener;
-import aima.gui.swing.demo.robotics.util.GuiBase;
+import aima.gui.swing.framework.util.GuiBase;
 import de.thkoeln.gm.mcl_mindstorms.localization.NXTMove;
 import de.thkoeln.gm.mcl_mindstorms.localization.NXTRangeReading;
 
@@ -32,14 +32,6 @@ import de.thkoeln.gm.mcl_mindstorms.localization.NXTRangeReading;
  */
 public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,AbstractRangeReading>, Runnable {
 	
-	/**
-	 * The distance that the ultrasonic sensor of the NXT can reliable measure in cm. Any range reading above this value should be treated as infinity. 
-	 */
-	public static final double MAX_RELIABLE_RANGE_READING = 180.0d;
-	/**
-	 * The distance that the ultrasonic sensor will return as a maximum in cm.
-	 */
-	public static final double MAX_RANGE_READING = 255.0d;
 	/**
 	 * This enum defines all messages that are exchanged with the NXT.
 	 */
@@ -63,7 +55,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	private int lightCutoff;
 	private int rotationStartAngle;
 	private boolean verbose;
-	private double badDelta;
+	
 	
 	/**
 	 * @param rangeReadingAngles the initial angles at which the ranges are read.
@@ -268,14 +260,6 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	}
 	
 	/**
-	 * Sets the bad delta for the calculation of the weight.
-	 * @param delta the delta to be set.
-	 */
-	public void setBadDelta(double delta) {
-		badDelta = delta;
-	}
-	
-	/**
 	 * Sets the minimum move distance and sends it to the robot if one is connected.
 	 * @param distance the distance to be set.
 	 */
@@ -405,21 +389,6 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 			throw new RobotException();
 		}
 	}
-
-	@Override
-	public float calculateWeight(AbstractRangeReading robotRange, AbstractRangeReading mapRange) {
-		if((robotRange.getValue() < 0 || Double.isInfinite(robotRange.getValue())) && (mapRange.getValue() < 0  || Double.isInfinite(mapRange.getValue()))) return 1;
-		final double robotValue;
-		if(Double.isInfinite(robotRange.getValue()) || robotRange.getValue() > MAX_RELIABLE_RANGE_READING) robotValue = MAX_RELIABLE_RANGE_READING;
-		else robotValue = robotRange.getValue();
-		final double mapValue;
-		if(Double.isInfinite(mapRange.getValue()) || mapRange.getValue() > MAX_RELIABLE_RANGE_READING) mapValue = MAX_RELIABLE_RANGE_READING;
-		else mapValue = mapRange.getValue();
-		final double delta = Math.abs(robotValue - mapValue);
-		if(delta > badDelta) return 0.0f;
-		return (float) (1.0d - delta / badDelta);
-	}
-
 	
 	@Override
 	public NXTMove performMove() throws RobotException {
