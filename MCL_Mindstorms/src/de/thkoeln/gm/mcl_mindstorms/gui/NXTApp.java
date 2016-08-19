@@ -34,7 +34,7 @@ public final class NXTApp extends MonteCarloLocalizationApp  {
 	public static void main(String[] args) {
 		File settingsFile = args.length > 0 ? new File(args[0]) : DEFAULT_SETTINGS_FILE;
 		NXTApp app = new NXTApp(settingsFile);
-		app.constructApplicationFrame();
+		app.constructBasicApplicationFrame();
 		app.notifyAllListeners();
 		app.show();
 	}
@@ -51,7 +51,7 @@ public final class NXTApp extends MonteCarloLocalizationApp  {
 		NXTSettingsListener settingsListener = new NXTSettingsListener(settingsGui);
 		settingsListener.createSettings();
 		
-		AnglePanel angles = new AnglePanel();
+		AnglePanel angles = new AnglePanel(RANGE_READING_ANGLES_TITLE);
 		settingsGui.registerSpecialSetting(RANGE_READING_ANGLES_KEY, angles);
 		
 		MclCartesianPlot2D<NXTPose, NXTMove, AbstractRangeReading> map = new MclCartesianPlot2D<NXTPose,NXTMove,AbstractRangeReading>(new SVGGroupParser(),new SVGGroupParser(),new NXTPositionFactory(),new NXTRangeReadingFactory());
