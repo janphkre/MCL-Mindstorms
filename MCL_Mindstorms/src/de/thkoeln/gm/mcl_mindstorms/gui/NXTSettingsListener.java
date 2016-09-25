@@ -101,10 +101,10 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		
 		settingsGui.registerSetting(PARTICLE_COUNT_KEY, "Particle count", "2000");
 		settingsGui.registerSetting(MIN_WEIGHT_KEY, "Min. particle weight", "0.0");
-		settingsGui.registerSetting(MAX_DISTANCE_KEY, "Max. particle distance", "25.0");
+		settingsGui.registerSetting(MAX_DISTANCE_KEY, "Max. particle distance", "50.0");
 		settingsGui.registerSetting(SENSOR_RANGE_KEY, "Max. sensor range", "255.0");
 		
-		settingsGui.registerSetting(BAD_DELTA_KEY, "Bad range delta", "10.0");
+		settingsGui.registerSetting(BAD_DELTA_KEY, "Bad range delta", "100.0");
 		settingsGui.registerSetting(MOVE_ROTATION_NOISE_KEY, "Move rotation noise (deg)", "1.0");
 		settingsGui.registerSetting(MOVE_DISTANCE_NOISE_KEY, "Move distance noise", "1.7");
 		settingsGui.registerSetting(RANGE_READING_NOISE_KEY, "Range reading noise", "1.0");
@@ -112,12 +112,12 @@ public final class NXTSettingsListener extends AbstractSettingsListener {
 		settingsGui.registerSetting(MAX_MOVE_DISTANCE_KEY, "Max. move distance", "20.0");
 		settingsGui.registerSetting(ROTATE_SPEED_KEY, "Rotation speed", "100.0");
 		settingsGui.registerSetting(TRAVEL_SPEED_KEY, "Travel speed", "50.0");
-		settingsGui.registerSetting(CLEARANCE_KEY, "Object clearance", "25.0");
+		settingsGui.registerSetting(CLEARANCE_KEY, "Object clearance", "35.0");
 		settingsGui.registerSetting(COLOR_CUTOFF_KEY, "Color cutoff", "5");
 		settingsGui.registerSetting(LIGHT_CUTOFF_KEY, "Light cutoff", "40");
 		settingsGui.registerSpecialSetting(CUTOFF_BUTTON_KEY, buttonPanel);
-		settingsGui.registerSetting(MOVE_COMMAND_KEY, "Move command", "GET_LINE_MOVE");
-		settingsGui.registerSetting(ROTATION_START_ANGLE_KEY, "Search start angle", "5");
+		settingsGui.registerSetting(MOVE_COMMAND_KEY, "Move command", "GET_RANDOM_MOVE");
+		settingsGui.registerSetting(ROTATION_START_ANGLE_KEY, "Search start angle", "15");
 		settingsGui.registerSetting(VERBOSE_ROBOT_KEY, "Verbose NXT", "false");
 
 		registerAbstractListener();
