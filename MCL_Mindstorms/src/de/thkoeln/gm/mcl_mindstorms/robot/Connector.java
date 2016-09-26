@@ -136,6 +136,7 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 		//CONNECT NORMAL:
 		connection = new NXTConnector();
 		if(!connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.PACKET)) {
+			GuiBase.showMessageBox("Failed to connect to the NXT.");
 			connected = false;
 			return;
 		}
