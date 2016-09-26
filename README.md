@@ -2,6 +2,8 @@
 
 This is a set of classes to enable the Lego NXT Robot to make use of the Monte-Carlo-Localization algorithm from the [Artificial Intelligence - A Modern Approach 3rd Edition](http://aima.cs.berkeley.edu/) [Java implementation](https://github.com/aimacode/aima-java/tree/AIMA3e) in connection with the [leJos NXJ framework](http://www.lejos.org/nxj.php).
 
+If you just want to run the program with the robot model included in this repository pick the latest [release](/releases).
+
 The implementation consists of 2 parts:
 
 ###1. [NXT daemon](/MCL_Mindstorms_NXT/src/de/thkoeln/gm/mcl_mindstorms/daemon/MclDaemon.java)
