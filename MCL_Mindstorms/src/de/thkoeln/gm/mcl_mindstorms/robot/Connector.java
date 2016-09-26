@@ -105,37 +105,34 @@ public final class Connector implements ChangeListener, IMclRobot<Angle,NXTMove,
 	public void connect(String name, String program) {
 		GuiBase.showMessageBox("Connecting...",false);
 		connection = new NXTConnector();
-		if(!connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.LCP)) {
-			GuiBase.showMessageBox("Failed to connect to the NXT.");
-			connected = false;
-			return;
-		}
-		NXTCommand command = new NXTCommand(connection.getNXTComm());
-		try {
-			command.startProgram(program);
-		} catch (IOException e) {
-			GuiBase.showMessageBox("Failed to start the program.");
+		if(connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.LCP)) {
+			//Start the program:
+			NXTCommand command = new NXTCommand(connection.getNXTComm());
+			try {
+				command.startProgram(program);
+			} catch (IOException e) {
+				GuiBase.showMessageBox("Failed to start the program.");
+				try {
+					command.disconnect();
+					connection.close();
+				} catch (IOException f) {
+					//ignore the exception
+				}
+				connected = false;
+				return;
+			}
 			try {
 				command.disconnect();
 				connection.close();
-			} catch (IOException f) {
+			} catch (IOException e) {
 				//ignore the exception
 			}
-			connected = false;
-			return;
+			try {
+				Thread.sleep(2000); // Wait 2 seconds for program to start 
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
-		try {
-			command.disconnect();
-			connection.close();
-		} catch (IOException e) {
-			//ignore the exception
-		}
-		try {
-			Thread.sleep(2000); // Wait 2 seconds for program to start 
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		
 		//CONNECT NORMAL:
 		connection = new NXTConnector();
 		if(!connection.connectTo(name, null, NXTCommFactory.BLUETOOTH, NXTComm.PACKET)) {
